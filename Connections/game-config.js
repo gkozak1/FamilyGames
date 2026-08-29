@@ -9,7 +9,7 @@
 window.CONNECTIONS_CONFIG = {
   title: "The Jewel of the Lochs",
   instructions: "Recover your connection",
-  puzzleId: "jewel-of-the-lochs-four-facets-v1",
+  puzzleId: "jewel-of-the-lochs-four-facets-v2",
   finalCode: "MAKE3PUTSHOL1GRN",
 
   facets: [
@@ -18,7 +18,7 @@ window.CONNECTIONS_CONFIG = {
       label: "Scarlet Facet",
       color: "#c6404d",
       categoryIndex: 2,
-      anchorText: "BILLIKENS (G)",
+      anchorText: "BILLIKIN (G)",
       partNumber: 4,
       acceptedKeywordSets: [
         ["college", "nickname"],
@@ -28,10 +28,10 @@ window.CONNECTIONS_CONFIG = {
       orderInstruction:
         "Put the college nicknames in chronological order of the first year attended.",
       orderedItems: [
-        "GREEN KNIGHTS (1)",
-        "BILLIKENS (G)",
+        "GREEN KNIGHT (1)",
+        "BILLIKIN (G)",
         "FIGHTING IRISH (R)",
-        "MAROONS (N)",
+        "MAROON (N)",
       ],
       code: "1GRN",
     },
@@ -40,7 +40,7 @@ window.CONNECTIONS_CONFIG = {
       label: "Peacock Facet",
       color: "#007c91",
       categoryIndex: 1,
-      anchorText: "MACARONS (3)",
+      anchorText: "MACARON (3)",
       partNumber: 2,
       acceptedKeywordSets: [
         ["french", "treat"],
@@ -49,10 +49,10 @@ window.CONNECTIONS_CONFIG = {
       ],
       orderInstruction: "Put the French treats in alphabetical order.",
       orderedItems: [
-        "MACARONS (3)",
-        "MADELEINES (P)",
-        "NAPOLEONS (U)",
-        "PROFITEROLES (T)",
+        "MACARON (3)",
+        "MADELEINE (P)",
+        "NAPOLEON (U)",
+        "PROFITEROLE (T)",
       ],
       code: "3PUT",
     },
@@ -119,10 +119,10 @@ window.CONNECTIONS_CONFIG = {
       description: "Sweet specialties from France",
       color: "#a0c35a",
       items: [
-        { text: "PROFITEROLES (T)" },
-        { text: "MACARONS (3)" },
-        { text: "NAPOLEONS (U)" },
-        { text: "MADELEINES (P)" },
+        { text: "PROFITEROLE (T)" },
+        { text: "MACARON (3)" },
+        { text: "NAPOLEON (U)" },
+        { text: "MADELEINE (P)" },
       ],
     },
     {
@@ -130,10 +130,10 @@ window.CONNECTIONS_CONFIG = {
       description: "School team names",
       color: "#b0c4ef",
       items: [
-        { text: "BILLIKENS (G)" },
+        { text: "BILLIKIN (G)" },
         { text: "FIGHTING IRISH (R)" },
-        { text: "MAROONS (N)" },
-        { text: "GREEN KNIGHTS (1)" },
+        { text: "MAROON (N)" },
+        { text: "GREEN KNIGHT (1)" },
       ],
     },
     {

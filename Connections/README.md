@@ -1,5 +1,7 @@
 # The Jewel of the Lochs — Four-Facet Connections
 
+Package revision: **2026-08-29 v3**. See `VERSION.txt` for the verification checklist.
+
 Upload the contents of this folder to the `FamilyGames/Connections` directory in your GitHub Pages repository.
 
 The four personalized entrances and assignments are:
