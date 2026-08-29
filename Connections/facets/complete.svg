@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Colored diamond facet">
+    <rect width="100" height="100" rx="12" fill="#ffffff"/>
+    
+    <polygon points="10,35 31,8 43,35" fill="#c6404d"/>
+    <polygon points="31,8 68,8 90,35 43,35" fill="#007c91"/>
+    <polygon points="10,35 43,35 50,91" fill="#c69100"/>
+    <polygon points="43,35 90,35 50,91" fill="#7b4f76"/>
+    <g fill="none" stroke="#111820" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 35 L31 8 H68 L90 35 L50 91 Z"/>
+      <path d="M10 35 H90"/>
+      <path d="M31 8 L43 35 L50 91"/>
+      <path d="M68 8 L43 35"/>
+    </g>
+  </svg>

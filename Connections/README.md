@@ -1,24 +1,45 @@
-# Your Connections Game
+# The Jewel of the Lochs — Four-Facet Connections
 
-This folder is ready to publish on GitHub Pages. It does not require a build step or any software installation.
+Upload the contents of this folder to the `FamilyGames/Connections` directory in your GitHub Pages repository.
 
-## Change the puzzle
+The four personalized entrances and assignments are:
 
-Edit **game-config.js**. Replace the four category names and their four items. Keep exactly four categories with four items apiece.
+1. Mustard — secondary destinations — code block 1: `https://gkozak1.github.io/FamilyGames/Connections/?facet=mustard`
+2. Peacock — French treats — code block 2: `https://gkozak1.github.io/FamilyGames/Connections/?facet=peacock`
+3. Plum — capitals — code block 3: `https://gkozak1.github.io/FamilyGames/Connections/?facet=plum`
+4. Scarlet — college nicknames/mascots — code block 4: `https://gkozak1.github.io/FamilyGames/Connections/?facet=scarlet`
 
-The category colors follow the usual difficulty order:
+Opening the base address without a facet parameter displays a printable Assistant page with all four QR codes.
 
-1. Yellow — most straightforward
-2. Green — moderately straightforward
-3. Blue — more difficult
-4. Purple — trickiest or wordplay-heavy
+## Files to upload
 
-## Put it on GitHub Pages
+Upload every file and folder here, including:
 
-1. Create a new public repository on GitHub.
-2. Upload `index.html`, `styles.css`, `game.js`, `game-config.js`, and `diamond-logo.png` from this folder to the repository's top level.
-3. In the repository, open **Settings → Pages**.
-4. Under **Build and deployment**, choose **Deploy from a branch**.
-5. Choose the `main` branch and `/ (root)`, then click **Save**.
+- `index.html`
+- `styles.css`
+- `game.js`
+- `game-config.js`
+- `diamond-logo.png`
+- the `facets` folder
+- the `qr` folder
 
-GitHub will display the public address after it publishes the site.
+## Editing the puzzle
+
+All category assignments, acceptable answer keywords, ordering instructions, fragments, and the final 16-character code are in `game-config.js`.
+
+The `acceptedKeywordSets` entries are alternatives. A player succeeds when their answer contains all the word stems in any one listed set. For example, `["french", "treat"]` accepts “French treats” and longer wording containing those two concepts.
+
+If the destination address changes, update `baseUrl` in `scripts/generate-qr-codes.mjs` in the full source package and regenerate the QR codes.
+
+## Player flow
+
+Each QR code permanently selects a different anchor clue. The player:
+
+1. Selects three additional clues and submits a connection.
+2. Identifies the recovered connection in words.
+3. Orders the four clues according to the personalized instruction.
+4. Receives one fixed four-character fragment.
+5. Exchanges fragments and block numbers with the other sleuths.
+6. Reconstructs and decodes the complete 16-character transmission.
+
+Progress is saved separately on each phone. There is no limit on guesses and no shared server state.

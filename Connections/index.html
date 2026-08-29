@@ -3,58 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A custom Connections-style puzzle." />
-    <title>Connections Game</title>
+    <meta name="description" content="The four-facet Connections challenge for The Jewel of the Lochs." />
+    <meta name="theme-color" content="#fffdf8" />
+    <title>The Jewel of the Lochs</title>
+    <link rel="icon" href="diamond-logo.png" />
     <link rel="stylesheet" href="styles.css" />
     <script src="game-config.js"></script>
     <script src="game.js" defer></script>
   </head>
   <body>
-    <main class="game-shell">
-      <header class="site-header">
-        <div class="brand-lockup">
-          <img class="diamond-logo" src="diamond-logo.png" width="46" height="46" alt="" />
-          <div class="header-copy">
-            <span class="eyebrow" id="eyebrow">Custom Puzzle</span>
-            <span class="header-divider" aria-hidden="true"></span>
-            <span class="header-instructions" id="instructions">Create four groups of four!</span>
-          </div>
-        </div>
-        <details class="how-to">
-          <summary>How to play</summary>
-          <div class="how-to-card">
-            <strong>Find groups of four items that share something in common.</strong>
-            <p>Select four tiles and choose Submit. You have four mistakes.</p>
-            <p>Categories become more difficult from yellow to purple.</p>
-          </div>
-        </details>
-      </header>
-
-      <section class="game" aria-label="Connections puzzle">
-        <div class="board" id="board" aria-label="Connections puzzle board"></div>
-
-        <div class="game-controls" id="game-controls">
-          <div class="message" id="message" role="status" aria-live="polite">&nbsp;</div>
-          <div class="mistakes" id="mistakes"></div>
-          <div class="button-row">
-            <button class="pill-button" id="shuffle-button" type="button">Shuffle</button>
-            <button class="pill-button" id="deselect-button" type="button" disabled>Deselect all</button>
-            <button class="pill-button submit-button" id="submit-button" type="button" disabled>Submit</button>
-          </div>
-        </div>
-
-        <div class="end-card hidden" id="end-card" aria-live="polite">
-          <h2 id="end-title"></h2>
-          <p id="end-copy"></p>
-          <div class="button-row">
-            <button class="pill-button submit-button" id="share-button" type="button">Share results</button>
-            <button class="pill-button" id="play-again-button" type="button">Play again</button>
-          </div>
-          <div class="message" id="end-message" role="status" aria-live="polite"></div>
-        </div>
-      </section>
-
-      <footer>Custom puzzle edition</footer>
-    </main>
+    <div id="app">
+      <main class="loading-shell">Preparing the Archive…</main>
+    </div>
   </body>
 </html>
