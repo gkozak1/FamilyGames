@@ -7,20 +7,20 @@
 
 window.CONNECTIONS_CONFIG = {
   title: "Connections",
-  eyebrow: "The Jewel of the Lochs",
+  eyebrow: "Kozak Family Puzzle",
   instructions: "Create four groups of four!",
   mistakesAllowed: 4,
 
   categories: [
     {
-      name: "Capital cities visited by Madeleine",
+      name: "Primary cities visited by Madeleine",
       description: "Principal city destinations",
       color: "#f9df6d",
       items: [
-        { text: "PARIS (S)" },
-        { text: "REYKJAVIK (H)" },
-        { text: "ROME (L)" },
-        { text: "DUBLIN (O)" },
+        { text: "PARIS" },
+        { text: "WELLINGTON" },
+        { text: "ROME" },
+        { text: "ZURICH" },
       ],
     },
     {
@@ -28,10 +28,10 @@ window.CONNECTIONS_CONFIG = {
       description: "Sweet specialties from France",
       color: "#a0c35a",
       items: [
-        { text: "PROFITEROLES (T)" },
-        { text: "MACARONS (3)" },
-        { text: "NAPOLEONS (U)" },
-        { text: "MADELEINES (P)" },
+        { text: "PROFITEROLES" },
+        { text: "MACARONS" },
+        { text: "NAPOLEONS" },
+        { text: "MADELEINES" },
       ],
     },
     {
@@ -39,10 +39,10 @@ window.CONNECTIONS_CONFIG = {
       description: "School team names",
       color: "#b0c4ef",
       items: [
-        { text: "BILLIKENS (G)" },
-        { text: "FIGHTING IRISH (R)" },
-        { text: "MAROONS (N)" },
-        { text: "GREEN KNIGHTS (1)" },
+        { text: "BILLIKENS" },
+        { text: "FIGHTING IRISH" },
+        { text: "MAROONS" },
+        { text: "GREEN KNIGHTS" },
       ],
     },
     {
@@ -50,10 +50,10 @@ window.CONNECTIONS_CONFIG = {
       description: "Stops beyond the principal destinations",
       color: "#ba81c5",
       items: [
-        { text: "HELLISSANDUR (E)" },
-        { text: "CINQUE TERRE (M)" },
-        { text: "OBERAMMERGAU (K)" },
-        { text: "INTERLAKEN (A)" },
+        { text: "HELLISSANDUR" },
+        { text: "CINQUE TERRE" },
+        { text: "OBERAMMERGAU" },
+        { text: "INTERLAKEN" },
       ],
     },
   ],
