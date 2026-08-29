@@ -28,7 +28,6 @@
 
   const elements = {
     eyebrow: document.getElementById("eyebrow"),
-    title: document.getElementById("game-title"),
     instructions: document.getElementById("instructions"),
     board: document.getElementById("board"),
     controls: document.getElementById("game-controls"),
@@ -245,7 +244,6 @@
   }
 
   elements.eyebrow.textContent = config.eyebrow || "Custom Puzzle";
-  elements.title.textContent = config.title || "Connections";
   elements.instructions.textContent =
     config.instructions || "Create four groups of four!";
   document.title = `${config.title || "Connections"} Game`;

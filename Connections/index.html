@@ -13,8 +13,12 @@
     <main class="game-shell">
       <header class="site-header">
         <div class="brand-lockup">
-          <span class="mini-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-          <span class="eyebrow" id="eyebrow">Custom Puzzle</span>
+          <img class="diamond-logo" src="diamond-logo.png" width="46" height="46" alt="" />
+          <div class="header-copy">
+            <span class="eyebrow" id="eyebrow">Custom Puzzle</span>
+            <span class="header-divider" aria-hidden="true"></span>
+            <span class="header-instructions" id="instructions">Create four groups of four!</span>
+          </div>
         </div>
         <details class="how-to">
           <summary>How to play</summary>
@@ -26,12 +30,7 @@
         </details>
       </header>
 
-      <section class="game" aria-labelledby="game-title">
-        <div class="title-block">
-          <h1 id="game-title">Connections</h1>
-          <p id="instructions">Create four groups of four!</p>
-        </div>
-
+      <section class="game" aria-label="Connections puzzle">
         <div class="board" id="board" aria-label="Connections puzzle board"></div>
 
         <div class="game-controls" id="game-controls">

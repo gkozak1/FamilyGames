@@ -16,7 +16,7 @@ The category colors follow the usual difficulty order:
 ## Put it on GitHub Pages
 
 1. Create a new public repository on GitHub.
-2. Upload `index.html`, `styles.css`, `game.js`, and `game-config.js` from this folder to the repository's top level.
+2. Upload `index.html`, `styles.css`, `game.js`, `game-config.js`, and `diamond-logo.png` from this folder to the repository's top level.
 3. In the repository, open **Settings → Pages**.
 4. Under **Build and deployment**, choose **Deploy from a branch**.
 5. Choose the `main` branch and `/ (root)`, then click **Save**.
