@@ -26,7 +26,7 @@ window.CONNECTIONS_CONFIG = {
         ["school", "team"],
       ],
       orderInstruction:
-        "Put the college nicknames in chronological order of the first year attended.",
+        "Put the college nicknames in chronological order of the first year in which a sleuth attended them.",
       orderedItems: [
         "GREEN KNIGHT (1)",
         "BILLIKIN (G)",
@@ -47,7 +47,7 @@ window.CONNECTIONS_CONFIG = {
         ["french", "dessert"],
         ["french", "pastr"],
       ],
-      orderInstruction: "Put the French treats in alphabetical order.",
+      orderInstruction: "Put the French pastries in alphabetical order.",
       orderedItems: [
         "MACARON (3)",
         "MADELEINE (P)",
@@ -66,7 +66,7 @@ window.CONNECTIONS_CONFIG = {
       acceptedKeywordSets: [
         ["places", "visited"],
         ["europe", "matt", "madeleine"],
-        ["secondary", "places"],
+        ["vacation", "places"],
       ],
       orderInstruction: "Put the places in the order Matt and Madeleine visited them.",
       orderedItems: [
@@ -90,7 +90,7 @@ window.CONNECTIONS_CONFIG = {
         ["capital", "countr"],
       ],
       orderInstruction:
-        "Put the capitals in alphabetical order of the countries they are capitals of.",
+        "Put the capitals that Madeleine has visted in alphabetical order of the countries they are capitals of.",
       orderedItems: [
         "PARIS (S)",
         "REYKJAVIK (H)",
@@ -126,7 +126,7 @@ window.CONNECTIONS_CONFIG = {
       ],
     },
     {
-      name: "Nicknames of colleges attended",
+      name: "Nicknames of colleges attended by sleuths",
       description: "School team names",
       color: "#b0c4ef",
       items: [
