@@ -18,7 +18,7 @@ window.CONNECTIONS_CONFIG = {
       label: "Scarlet Facet",
       color: "#c6404d",
       categoryIndex: 2,
-      anchorText: "BILLIKIN (G)",
+      anchorText: "MAROON (X)",
       partNumber: 4,
       acceptedKeywordSets: [
         ["college", "nickname"],
@@ -29,18 +29,18 @@ window.CONNECTIONS_CONFIG = {
         "Put the college nicknames in chronological order of the first year in which a sleuth attended them.",
       orderedItems: [
         "GREEN KNIGHT (1)",
-        "BILLIKIN (G)",
-        "FIGHTING IRISH (R)",
-        "MAROON (N)",
+        "BILLIKIN (F)",
+        "FIGHTING IRISH (O)",
+        "MAROON (X)",
       ],
-      code: "1GRN",
+      code: "1FOX",
     },
     {
       id: "peacock",
       label: "Peacock Facet",
       color: "#007c91",
       categoryIndex: 1,
-      anchorText: "MACARON (3)",
+      anchorText: "MADELEINE (P)",
       partNumber: 2,
       acceptedKeywordSets: [
         ["french", "treat"],
@@ -61,7 +61,7 @@ window.CONNECTIONS_CONFIG = {
       label: "Mustard Facet",
       color: "#c69100",
       categoryIndex: 3,
-      anchorText: "CINQUE TERRE (M)",
+      anchorText: "HELLISSANDUR (E)",
       partNumber: 1,
       acceptedKeywordSets: [
         ["places", "visited"],
