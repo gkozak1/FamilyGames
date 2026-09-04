@@ -18,7 +18,7 @@ window.CONNECTIONS_CONFIG = {
       label: "Scarlet Facet",
       color: "#c6404d",
       categoryIndex: 2,
-      anchorText: "MAROON (X)",
+      anchorText: "MAROON (N)",
       partNumber: 4,
       acceptedKeywordSets: [
         ["college", "nickname"],
@@ -29,11 +29,11 @@ window.CONNECTIONS_CONFIG = {
         "Put the college nicknames in chronological order of the first year in which a sleuth attended them.",
       orderedItems: [
         "GREEN KNIGHT (1)",
-        "BILLIKIN (F)",
-        "FIGHTING IRISH (O)",
-        "MAROON (X)",
+        "BILLIKIN (G)",
+        "FIGHTING IRISH (R)",
+        "MAROON (N)",
       ],
-      code: "1FOX",
+      code: "1GRN",
     },
     {
       id: "peacock",
