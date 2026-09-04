@@ -9,8 +9,8 @@
 window.CONNECTIONS_CONFIG = {
   title: "The Jewel of the Lochs",
   instructions: "Recover your connection",
-  puzzleId: "jewel-of-the-lochs-four-facets-v2",
-  finalCode: "MAKE3PUTSHOL1GRN",
+  puzzleId: "jewel-of-the-lochs-four-facets-v3",
+  finalCode: "MAKE3PUTSHOL1FOX",
 
   facets: [
     {
@@ -18,7 +18,7 @@ window.CONNECTIONS_CONFIG = {
       label: "Scarlet Facet",
       color: "#c6404d",
       categoryIndex: 2,
-      anchorText: "MAROON (N)",
+      anchorText: "MAROON (X)",
       partNumber: 4,
       acceptedKeywordSets: [
         ["college", "nickname"],
@@ -29,11 +29,11 @@ window.CONNECTIONS_CONFIG = {
         "Put the college nicknames in chronological order of the first year in which a sleuth attended them.",
       orderedItems: [
         "GREEN KNIGHT (1)",
-        "BILLIKIN (G)",
-        "FIGHTING IRISH (R)",
-        "MAROON (N)",
+        "BILLIKIN (F)",
+        "FIGHTING IRISH (O)",
+        "MAROON (X)",
       ],
-      code: "1GRN",
+      code: "1FOX",
     },
     {
       id: "peacock",
@@ -90,7 +90,7 @@ window.CONNECTIONS_CONFIG = {
         ["capital", "countr"],
       ],
       orderInstruction:
-        "Put the capitals that Madeleine has visted in alphabetical order of the countries they are capitals of.",
+        "Put the capitals that Madeleine has visited in alphabetical order of the countries they are capitals of.",
       orderedItems: [
         "PARIS (S)",
         "REYKJAVIK (H)",

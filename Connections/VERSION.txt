@@ -1,12 +1,13 @@
 The Jewel of the Lochs — GitHub Pages Package
-Revision: 2026-08-29 v3
+Revision: 2026-09-04 v4
 
 Verified changes in this revision:
-- Final code: MAKE3PUTSHOL1GRN
+- Final code: MAKE3PUTSHOL1FOX
 - Mustard: secondary places, part 1
 - Peacock: French pastries, part 2
 - Plum: capitals, part 3
 - Scarlet: college mascots, part 4
 - Singular tiles: MAROON, BILLIKIN, GREEN KNIGHT, MACARON,
   PROFITEROLE, NAPOLEON, and MADELEINE
-- Asset cache version: v2
+- Anchors: MAROON, MADELEINE, HELLISSANDUR, and PARIS
+- Configuration cache version: v3
