@@ -130,9 +130,9 @@ window.CONNECTIONS_CONFIG = {
       description: "School team names",
       color: "#b0c4ef",
       items: [
-        { text: "BILLIKIN (G)" },
-        { text: "FIGHTING IRISH (R)" },
-        { text: "MAROON (N)" },
+        { text: "BILLIKIN (F)" },
+        { text: "FIGHTING IRISH (O)" },
+        { text: "MAROON (X)" },
         { text: "GREEN KNIGHT (1)" },
       ],
     },
