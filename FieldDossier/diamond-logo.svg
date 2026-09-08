@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs><filter id="s" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity=".28"/></filter></defs>
+  <g filter="url(#s)" stroke="#f5f0e5" stroke-width="2.5" stroke-linejoin="round">
+    <polygon points="60,7 108,38 60,60" fill="#007c91"/>
+    <polygon points="108,38 84,106 60,60" fill="#7b4f76"/>
+    <polygon points="84,106 36,106 60,60" fill="#c69100"/>
+    <polygon points="36,106 12,38 60,60" fill="#c6404d"/>
+  </g>
+  <path d="M12 38h96M36 106L60 60l24 46" fill="none" stroke="#26343a" stroke-width="2" opacity=".65"/>
+</svg>

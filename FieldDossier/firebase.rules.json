@@ -1,0 +1,39 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sessions": {
+      "$session": {
+        ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
+        "participants": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && (!data.exists() || data.child('persona').val() === newData.child('persona').val())",
+            ".validate": "newData.hasChild('persona') && (newData.child('persona').val() === 'scarlet' || newData.child('persona').val() === 'peacock' || newData.child('persona').val() === 'mustard' || newData.child('persona').val() === 'plum')"
+          }
+        },
+        "evidence": {
+          "$site": {
+            "$persona": {
+              ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('persona').val() === $persona"
+            }
+          }
+        },
+        "synthesis": {
+          "$site": {
+            ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).exists()"
+          }
+        },
+        "ciphers": {
+          "$site": {
+            ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).exists()"
+          }
+        },
+        "engine": {
+          "$site": {
+            ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).exists()"
+          }
+        }
+      }
+    }
+  }
+}
