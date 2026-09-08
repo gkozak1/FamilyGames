@@ -1,33 +1,56 @@
-# FieldDossier v2 — Test Report
+# FieldDossier — Test Report
 
-Date: 2026-09-08
+Build date: 2026-09-08
 
 ## Automated logic tests
 
-`node tests.js`
-
-- PASS — all 28 persona challenges accept their configured expected evidence
-- PASS — Kopp's pair evidence derives 16 and 15, then difference 1
-- PASS — cipher map has seven unique letters and seven unique positions
-- PASS — recovered ciphers sort numerically
-- PASS — four distinct persona presses inside 5,000 ms qualify
-- PASS — a press after the 5,000 ms deadline does not join the expired attempt
-- PASS — duplicate presses by one persona do not substitute for a missing sleuth
-- PASS — replay begins a new shared attempt after a successful attempt
-- PASS — site completion requires synthesis at Kopp's and the Dunes
+Command: `node tests.js`
 
 Result: **ALL TESTS PASSED**
 
-## Static checks
+Validated:
 
-- `node --check` passed for `app.js`, `firebase-sync.js`, `config.js`, `core.js`, and `coordination-core.js`.
-- `firebase.rules.json` parses as valid JSON.
-- Player site tabs contain only numbered circles.
-- Player site title is `Evidence Gathering`; location names are not rendered on the site view or Cipher Engine.
-- Removed `Active field dossier` and `Seven sites...` copy.
-- Cipher Engine result copy is `CIPHER CREATED`; `Correlation Recovered` is absent.
-- Cipher Engine supports replay through a new four-person quorum attempt.
+- all 28 persona challenges accept their intended evidence
+- Kopp's pair values produce 16 and 15, with team difference 1
+- all seven working cipher letters are unique
+- all seven working cipher positions are unique and lie from 1–7
+- recovered ciphers sort numerically
+- four distinct persona presses inside 5,000 ms qualify the Cipher Engine
+- a press after the five-second deadline does not join an expired attempt
+- duplicate persona presses do not substitute for a missing sleuth
+- replay starts a fresh Cipher Engine attempt after success
+- site completion requires team synthesis when configured
 
-## Deployment-dependent test still required
+## Static validation
 
-A true four-phone timing test requires a real Firebase project because the ZIP intentionally does not contain the user's Firebase credentials. After inserting `firebase-config.js`, test with four devices using the same `session` query parameter and four different `persona` parameters.
+Passed:
+
+- `app.js` JavaScript syntax check
+- `firebase-sync.js` JavaScript syntax check
+- `facilitator.js` JavaScript syntax check
+- `firebase.rules.json` JSON parse validation
+
+## Reset architecture review
+
+The reset design now:
+
+1. keeps Firebase `participants` so the four phones remain associated with the session
+2. atomically deletes `evidence`, `synthesis`, `ciphers`, and `engine`
+3. writes a shared `meta/resetAt` timestamp
+4. makes each phone wait for a current Firebase session snapshot before flushing queued offline writes
+5. discards queued/local run data if it sees a newer `resetAt` value
+6. requires the facilitator to type the session ID exactly and confirm a second time
+7. keeps production isolation by supporting a separate fresh production session ID
+
+## Firebase live test still required after deployment
+
+Because the Firebase database is an external service, complete the following after uploading the new rules and GitHub files:
+
+- open Scarlet, Peacock, Mustard, and Plum URLs in four browsers/devices
+- enter evidence and confirm cross-device synchronization
+- run one four-person Cipher Engine sequence inside five seconds
+- open `facilitator.html?session=<test-session>`
+- reset the session
+- verify all four player screens return to a clean Site 1 state and no old evidence reappears
+- enter new evidence after reset to verify continued synchronization
+

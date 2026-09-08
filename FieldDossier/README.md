@@ -5,38 +5,102 @@ This folder is designed to be uploaded directly to a GitHub Pages directory. Git
 ## What this version does
 
 - Four persona-specific phones share one evidence record in real time.
-- Each phone records only its own persona evidence; all four records become visible at Team Convergence.
+- Each phone records its own persona evidence; all four records become visible at Team Convergence.
 - Kopp's and the Kenosha Dunes include explicit team-convergence steps before the Cipher Engine unlocks.
 - The Cipher Engine will not run until **all four personas press `Ingest Evidence` within 5 seconds of the first press**.
 - A failed attempt returns to the ready state and displays: **All four sleuths must ingest evidence within 5 seconds of each other.**
 - Every successful run can be replayed. A replay again requires four `Ingest Evidence` presses inside the five-second window.
-- The four persona-colored evidence records visibly feed into the animated Cipher Engine, which then displays **CIPHER CREATED** and a configured letter/number pair.
+- The four persona-colored evidence records visibly feed into the animated Cipher Engine, which displays **CIPHER CREATED** and a configured letter/number pair.
 - Recovered ciphers are shared across phones and displayed in numeric order only.
-- Device-local storage preserves the most recent synchronized record and queues evidence entered while connectivity is unavailable; queued writes are pushed when Firebase reconnects.
+- Device-local storage preserves synchronized evidence and queues evidence entered while connectivity is unavailable.
+- A separate **Facilitator Console** can reset a test session without deleting the four connected player identities.
+- A reset clears evidence, team synthesis, engine attempts, and recovered ciphers. Player devices detect the reset and purge stale locally queued run data before synchronizing again.
 
-## Firebase setup — required for four-phone synchronization
+## Firebase setup
 
-1. Create a Firebase project and add a Web App.
-2. In **Authentication**, enable **Anonymous** sign-in.
-3. Create a **Realtime Database**.
-4. Copy the Firebase Web App configuration into `firebase-config.js`. Make sure `databaseURL` is included.
-5. Replace the database rules with the contents of `firebase.rules.json` and publish them.
-6. Upload the entire `FieldDossier` folder to the desired GitHub Pages location.
+The Firebase Web App configuration and Realtime Database URL are already present in `firebase-config.js`.
+
+Before deploying:
+
+1. In Firebase **Authentication**, enable **Anonymous** sign-in.
+2. In Firebase **Realtime Database → Rules**, replace the rules with the contents of `firebase.rules.json` and click **Publish**.
+3. Upload the entire `FieldDossier` folder to the desired GitHub Pages directory.
 
 The app uses Firebase's browser-module SDK from Google's CDN. No npm build step is required.
 
-If Firebase is not configured, the app opens in local-device mode so the interface can still be inspected, but the shared four-person Cipher Engine is intentionally disabled.
-
 ## Four player URLs
 
-The session identifier keeps the four phones in the same hunt. Use one shared session value and a different persona value on each phone:
+Use one shared session value and a different persona value on each phone:
 
-- `?session=JOTL-2026-FIELD&persona=scarlet`
-- `?session=JOTL-2026-FIELD&persona=peacock`
-- `?session=JOTL-2026-FIELD&persona=mustard`
-- `?session=JOTL-2026-FIELD&persona=plum`
+- `index.html?session=TEST-1&persona=scarlet`
+- `index.html?session=TEST-1&persona=peacock`
+- `index.html?session=TEST-1&persona=mustard`
+- `index.html?session=TEST-1&persona=plum`
 
-For the real event, use a harder-to-guess session ID if desired and encode these URLs into the four QR codes.
+For the real event, use a new production session ID, for example:
+
+- `?session=JOTL-2026-PRODUCTION&persona=scarlet`
+- `?session=JOTL-2026-PRODUCTION&persona=peacock`
+- `?session=JOTL-2026-PRODUCTION&persona=mustard`
+- `?session=JOTL-2026-PRODUCTION&persona=plum`
+
+A fresh production session ID ensures that test evidence cannot appear in the real run even if old test sessions remain in Firebase.
+
+## Facilitator Console and resetting tests
+
+Open:
+
+`facilitator.html?session=TEST-1`
+
+The facilitator page anonymously signs into Firebase with a facilitator role for that session and shows:
+
+- evidence count out of 28
+- cipher count out of 7
+- player identities that have joined
+- the last reset time
+- copyable URLs for all four player personas
+- **Reset Current Session**
+
+Reset requires two safeguards:
+
+1. type the current session ID exactly
+2. confirm the destructive reset
+
+The reset clears only the run-state branches for that session:
+
+- evidence
+- team synthesis
+- Cipher Engine attempts
+- recovered ciphers
+
+It deliberately keeps `participants`, so four phones that are already connected do not need to rejoin. A reset timestamp is written to Firebase. Each player phone sees that timestamp and deletes stale local/queued test data before allowing further synchronization.
+
+### Recommended workflow
+
+**Testing**
+
+1. Use `session=TEST-1` on all four phones/windows.
+2. Run the game as far as desired.
+3. Open `facilitator.html?session=TEST-1`.
+4. Press **Reset Current Session**.
+5. All four player devices should return to a clean Site 1 state.
+
+You can also use a fresh test ID such as `TEST-2` instead of resetting.
+
+**Production**
+
+Use a brand-new production session ID in the final QR codes. Do not reuse a test session ID.
+
+## Important facilitator-security note
+
+This is a private family-game app, not a public administrative system. The Facilitator Console is intentionally lightweight. Anyone who knows the facilitator URL and session ID could identify themselves as a facilitator. Do not publish or distribute the facilitator URL to players. The regular player interface does not link to it.
+
+For this use case, the protection against accidental loss is:
+
+- the facilitator console is separate from the player UI
+- the session ID must be typed exactly before a reset
+- a second confirmation is required
+- production uses a fresh session ID
 
 ## Five-second Cipher Engine logic
 
@@ -52,15 +116,18 @@ The current A–G / 1–7 mapping is a working prototype mapping in `config.js`.
 
 ## Files
 
-- `index.html` — GitHub Pages entry point
-- `styles.css` — responsive field-dossier / Cipher Engine design
+- `index.html` — player GitHub Pages entry point
+- `facilitator.html` — facilitator/reset console
+- `app.js` — player interface
+- `facilitator.js` — facilitator console and protected reset workflow
+- `styles.css` — responsive field-dossier / Cipher Engine / facilitator design
 - `config.js` — personas, evidence challenges, working cipher mappings
 - `core.js` — validation and evidence utilities
 - `coordination-core.js` — pure five-second four-person quorum logic
-- `firebase-sync.js` — Firebase authentication, shared evidence, ciphers, and synchronized Cipher Engine attempts
-- `firebase-config.js` — paste Firebase Web App settings here
-- `firebase.rules.json` — recommended Realtime Database rules
-- `diamond-logo.svg` — Jewel of the Lochs four-color diamond asset
+- `firebase-sync.js` — anonymous auth, shared evidence, ciphers, reset awareness, and synchronized Cipher Engine attempts
+- `firebase-config.js` — configured Firebase Web App settings
+- `firebase.rules.json` — Realtime Database rules, including facilitator reset permissions
+- `diamond-logo.svg` — Jewel of the Lochs diamond asset
 - `FIELD_EVIDENCE_TABLE.md` — source-of-truth challenge table
 - `tests.js` — automated logic tests
 - `TEST_REPORT.md` — current test results

@@ -7,31 +7,44 @@
         ".read": "auth != null && data.child('participants').child(auth.uid).exists()",
         "participants": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (!data.exists() || data.child('persona').val() === newData.child('persona').val())",
-            ".validate": "newData.hasChild('persona') && (newData.child('persona').val() === 'scarlet' || newData.child('persona').val() === 'peacock' || newData.child('persona').val() === 'mustard' || newData.child('persona').val() === 'plum')"
+            ".write": "auth != null && auth.uid === $uid && (!data.exists() || !data.child('role').exists() || data.child('role').val() === newData.child('role').val())",
+            ".validate": "newData.hasChildren(['persona','role','joinedAt']) && ((newData.child('role').val() === 'player' && (newData.child('persona').val() === 'scarlet' || newData.child('persona').val() === 'peacock' || newData.child('persona').val() === 'mustard' || newData.child('persona').val() === 'plum')) || (newData.child('role').val() === 'facilitator' && newData.child('persona').val() === 'facilitator'))"
           }
         },
         "evidence": {
           "$site": {
             "$persona": {
-              ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('persona').val() === $persona"
+              ".write": "auth != null && (root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator' || (root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'player' && root.child('sessions').child($session).child('participants').child(auth.uid).child('persona').val() === $persona))"
             }
-          }
+          },
+          ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator'"
         },
         "synthesis": {
           "$site": {
             ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).exists()"
-          }
+          },
+          ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator'"
         },
         "ciphers": {
           "$site": {
             ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).exists()"
-          }
+          },
+          ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator'"
         },
         "engine": {
           "$site": {
             ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).exists()"
-          }
+          },
+          ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator'"
+        },
+        "meta": {
+          "resetAt": {
+            ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator'"
+          },
+          "resetBy": {
+            ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator'"
+          },
+          ".write": "auth != null && root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator'"
         }
       }
     }

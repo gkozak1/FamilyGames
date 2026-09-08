@@ -27,7 +27,7 @@ async function start(persona) {
   saveUi();
   renderLoading();
   sync = await createFieldSync({
-    sessionId: sessionId(), persona, config: window.FIELD_FIREBASE_CONFIG,
+    sessionId: sessionId(), persona, role:'player', config: window.FIELD_FIREBASE_CONFIG,
     onState: state => {
       team = state || team;
       if (engineOverlay) updateEngineOverlay();
