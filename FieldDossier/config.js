@@ -87,11 +87,11 @@
   ];
 
   return {
-    version: 'FieldDossier v2 · 2026-09-08',
+    version: 'FieldDossier v3 · 2026-09-08',
     title: 'The Jewel of the Lochs',
     subtitle: 'Field Dossier',
     defaultSessionId: 'JOTL-2026-FIELD',
-    engineWindowMs: 60000,
+    engineWindowMs: 20000,
     personas: PERSONAS,
     personaOrder: ['scarlet','peacock','mustard','plum'],
     sites: SITES

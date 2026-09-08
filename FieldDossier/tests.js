@@ -1,3 +1,4 @@
+const fs = require('fs');
 const CONFIG = require('./config.js');
 const CORE = require('./core.js');
 const COORD = require('./coordination-core.js');
@@ -49,35 +50,57 @@ test('Recall sorting is numerical', () => {
   const sorted=CORE.sortCiphers(obj).map(x=>x.number).join(','); assert(sorted==='2,5,7',sorted);
 });
 
-test('Four persona presses within five seconds qualify', () => {
-  let a=null; const t=100000;
-  a=COORD.applyPress(a,{attemptId:'x',now:t,persona:'scarlet',uid:'s',windowMs:5000});
-  a=COORD.applyPress(a,{attemptId:'y',now:t+900,persona:'peacock',uid:'p',windowMs:5000});
-  a=COORD.applyPress(a,{attemptId:'z',now:t+2800,persona:'mustard',uid:'m',windowMs:5000});
-  a=COORD.applyPress(a,{attemptId:'q',now:t+4999,persona:'plum',uid:'l',windowMs:5000});
-  assert(COORD.pressCount(a)===4,'press count'); assert(COORD.qualifies(a,5000),'should qualify'); assert(COORD.pressSpreadMs(a)===4999,'spread');
+
+
+test('Facilitator identity is stored separately from player identities', () => {
+  const rules=JSON.parse(fs.readFileSync('./firebase.rules.json','utf8'));
+  const sessionRules=rules?.rules?.sessions?.['$session'];
+  assert(Boolean(sessionRules?.facilitators?.['$uid']), 'facilitators/$uid rule missing');
+  const source=fs.readFileSync('./firebase-sync.js','utf8');
+  assert(source.includes("sessions/${sid}/facilitators/${uid}"), 'facilitator identity path missing from sync code');
+  assert(source.includes("role === 'facilitator'"), 'role-specific facilitator registration missing');
 });
 
-test('A press after the five-second deadline does not join the expired attempt', () => {
+test('Session read permits either player or facilitator identity', () => {
+  const rules=JSON.parse(fs.readFileSync('./firebase.rules.json','utf8'));
+  const readRule=rules?.rules?.sessions?.['$session']?.['.read'] || '';
+  assert(readRule.includes("participants"), 'participant read condition missing');
+  assert(readRule.includes("facilitators"), 'facilitator read condition missing');
+});
+
+test('Configured Cipher Engine window is twenty seconds', () => {
+  assert(CONFIG.engineWindowMs===20000, `expected 20000ms, got ${CONFIG.engineWindowMs}`);
+});
+
+test('Four persona presses within twenty seconds qualify', () => {
+  let a=null; const t=100000;
+  a=COORD.applyPress(a,{attemptId:'x',now:t,persona:'scarlet',uid:'s',windowMs:20000});
+  a=COORD.applyPress(a,{attemptId:'y',now:t+3900,persona:'peacock',uid:'p',windowMs:20000});
+  a=COORD.applyPress(a,{attemptId:'z',now:t+12800,persona:'mustard',uid:'m',windowMs:20000});
+  a=COORD.applyPress(a,{attemptId:'q',now:t+19999,persona:'plum',uid:'l',windowMs:20000});
+  assert(COORD.pressCount(a)===4,'press count'); assert(COORD.qualifies(a,20000),'should qualify'); assert(COORD.pressSpreadMs(a)===19999,'spread');
+});
+
+test('A press after the twenty-second deadline does not join the expired attempt', () => {
   const t=200000;
-  let a=COORD.applyPress(null,{attemptId:'x',now:t,persona:'scarlet',uid:'s',windowMs:5000});
-  a=COORD.applyPress(a,{attemptId:'y',now:t+5001,persona:'peacock',uid:'p',windowMs:5000});
-  assert(COORD.pressCount(a)===1,'late press should not be added'); assert(COORD.expired(a,t+5001),'attempt should be expired');
+  let a=COORD.applyPress(null,{attemptId:'x',now:t,persona:'scarlet',uid:'s',windowMs:20000});
+  a=COORD.applyPress(a,{attemptId:'y',now:t+20001,persona:'peacock',uid:'p',windowMs:20000});
+  assert(COORD.pressCount(a)===1,'late press should not be added'); assert(COORD.expired(a,t+20001),'attempt should be expired');
 });
 
 test('All four distinct personas are required', () => {
   const t=300000;
-  let a=COORD.applyPress(null,{attemptId:'x',now:t,persona:'scarlet',uid:'s1',windowMs:5000});
-  a=COORD.applyPress(a,{attemptId:'x',now:t+500,persona:'scarlet',uid:'s2',windowMs:5000});
-  a=COORD.applyPress(a,{attemptId:'x',now:t+1000,persona:'peacock',uid:'p',windowMs:5000});
-  a=COORD.applyPress(a,{attemptId:'x',now:t+1500,persona:'mustard',uid:'m',windowMs:5000});
-  assert(COORD.pressCount(a)===3,'duplicate persona must not count twice'); assert(!COORD.qualifies(a,5000),'should not qualify');
+  let a=COORD.applyPress(null,{attemptId:'x',now:t,persona:'scarlet',uid:'s1',windowMs:20000});
+  a=COORD.applyPress(a,{attemptId:'x',now:t+500,persona:'scarlet',uid:'s2',windowMs:20000});
+  a=COORD.applyPress(a,{attemptId:'x',now:t+1000,persona:'peacock',uid:'p',windowMs:20000});
+  a=COORD.applyPress(a,{attemptId:'x',now:t+1500,persona:'mustard',uid:'m',windowMs:20000});
+  assert(COORD.pressCount(a)===3,'duplicate persona must not count twice'); assert(!COORD.qualifies(a,20000),'should not qualify');
 });
 
 test('A replay press starts a new sequence after a successful attempt', () => {
-  const old={attemptId:'old',sequence:4,status:'success',startedAt:1,deadlineAt:5001,presses:{}};
-  const next=COORD.applyPress(old,{attemptId:'new',now:9000,persona:'plum',uid:'p',windowMs:5000});
-  assert(next.status==='arming','new attempt not arming'); assert(next.sequence===5,'sequence not incremented'); assert(next.attemptId==='new','attempt id'); assert(COORD.pressCount(next)===1,'new first press');
+  const old={attemptId:'old',sequence:4,status:'success',startedAt:1,deadlineAt:20001,presses:{}};
+  const next=COORD.applyPress(old,{attemptId:'new',now:9000,persona:'plum',uid:'p',windowMs:20000});
+  assert(next.status==='arming','new attempt not arming'); assert(next.sequence===5,'sequence not incremented'); assert(next.attemptId==='new','attempt id'); assert(COORD.pressCount(next)===1,'new first press'); assert(next.deadlineAt-next.startedAt===20000,'replay must use the 20-second window');
 });
 
 test('Site completion requires all four evidence records and synthesis where configured', () => {

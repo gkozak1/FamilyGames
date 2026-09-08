@@ -47,9 +47,12 @@ function renderChooser() {
   document.querySelectorAll('[data-persona]').forEach(b=>b.addEventListener('click',()=>start(b.dataset.persona)));
 }
 
+function engineWindowSeconds() { return Math.round(Number(CONFIG.engineWindowMs || 20000) / 1000); }
+function engineWindowInstruction() { return `All four sleuths must ingest evidence within ${engineWindowSeconds()} seconds of each other.`; }
+
 function header() {
   const p = CONFIG.personas[ui.persona];
-  return `<header class="app-header"><button class="brand" data-home>${logo(44)}<span><strong>${CONFIG.title}</strong><small>${CONFIG.subtitle}</small></span></button><div class="header-right"><span id="connectionBadge" class="connection-badge ${connection.connected?'online':'offline'}">${connection.connected?'SYNC':'LOCAL'}</span><span class="persona-chip" style="--persona:${p.color}"><i></i>${p.short}</span><button class="icon-button" data-recall aria-label="Recovered ciphers">⌁</button></div></header>`;
+  return `<header class="app-header"><button class="brand" data-home>${logo(44)}<span><strong>${CONFIG.title}</strong><small>${CONFIG.subtitle}</small></span></button><div class="header-right"><span id="connectionBadge" class="connection-badge ${connection.connected?'online':'offline'}">${connection.connected?'SYNC':'LOCAL'}</span><span class="persona-chip" style="--persona:${p.color}"><i></i>${p.short}</span><button class="cipher-library-button" data-recall aria-label="Cipher Library">Cipher Library</button></div></header>`;
 }
 function updateConnectionBadge() {
   const el=document.getElementById('connectionBadge'); if(!el)return;
@@ -148,7 +151,7 @@ function bindMain(site) {
 function openEngine(site) {
   if(!CORE.siteComplete(CONFIG,site,team)) return;
   engineOverlay=document.createElement('div'); engineOverlay.className='engine-overlay'; engineOverlay.dataset.siteId=site.id; engineOverlay.dataset.mode='ready';
-  engineOverlay.innerHTML=`<section class="engine-modal theme-${site.theme}"><button class="engine-close">×</button><div class="engine-heading">${logo(56)}<div><p class="eyebrow">McINTYRE MECHANICAL UNIT</p><h2>Cipher Engine</h2></div></div><div class="engine-inputs">${CONFIG.personaOrder.map((pid,i)=>{const p=CONFIG.personas[pid],r=team.evidence[site.id][pid],c=site.challenges[pid];return `<div class="engine-input input-${i+1}" style="--persona:${p.color}"><span>${p.short}</span><strong>${escapeHtml(r.override?'ASSISTANT VERIFIED':CORE.formatEvidence(c,r))}</strong></div>`}).join('')}</div><div class="machine"><div class="gear g1"></div><div class="gear g2"></div><div class="gear g3"></div><div class="machine-plate">CIPHER<br><b>ENGINE</b></div><div class="reels"><span data-letter>?</span><span data-number>?</span></div></div><div class="quorum"><div class="quorum-lights">${CONFIG.personaOrder.map(pid=>`<span data-quorum="${pid}" style="--persona:${CONFIG.personas[pid].color}"><i></i>${CONFIG.personas[pid].short}</span>`).join('')}</div><p data-engine-status>All four sleuths must ingest evidence within 5 seconds of each other.</p><strong data-countdown></strong></div><div class="engine-message" data-engine-message></div><div class="engine-actions"><button class="primary" data-ingest>Ingest Evidence</button><button class="secondary hidden" data-replay>Replay Cipher Engine</button><button class="secondary hidden" data-return>Return to Evidence Gathering</button></div></section>`;
+  engineOverlay.innerHTML=`<section class="engine-modal theme-${site.theme}"><button class="engine-close">×</button><div class="engine-heading">${logo(56)}<div><p class="eyebrow">McINTYRE MECHANICAL UNIT</p><h2>Cipher Engine</h2></div></div><div class="engine-inputs">${CONFIG.personaOrder.map((pid,i)=>{const p=CONFIG.personas[pid],r=team.evidence[site.id][pid],c=site.challenges[pid];return `<div class="engine-input input-${i+1}" style="--persona:${p.color}"><span>${p.short}</span><strong>${escapeHtml(r.override?'ASSISTANT VERIFIED':CORE.formatEvidence(c,r))}</strong></div>`}).join('')}</div><div class="machine"><div class="gear g1"></div><div class="gear g2"></div><div class="gear g3"></div><div class="machine-plate">CIPHER<br><b>ENGINE</b></div><div class="reels"><span data-letter>?</span><span data-number>?</span></div></div><div class="quorum"><div class="quorum-lights">${CONFIG.personaOrder.map(pid=>`<span data-quorum="${pid}" style="--persona:${CONFIG.personas[pid].color}"><i></i>${CONFIG.personas[pid].short}</span>`).join('')}</div><p data-engine-status>${engineWindowInstruction()}</p><strong data-countdown></strong></div><div class="engine-message" data-engine-message></div><div class="engine-actions"><button class="primary" data-ingest>Ingest Evidence</button><button class="secondary hidden" data-replay>Replay Cipher Engine</button><button class="secondary hidden" data-return>Return to Evidence Gathering</button></div></section>`;
   document.body.appendChild(engineOverlay);
   engineOverlay.querySelector('.engine-close').addEventListener('click',closeEngine);
   engineOverlay.addEventListener('click',e=>{if(e.target===engineOverlay)closeEngine();});
@@ -163,7 +166,7 @@ async function pressIngest() {
   if(!engineOverlay||!sync) return;
   const btn=engineOverlay.querySelector('[data-ingest]'); btn.disabled=true;
   const result=await sync.pressEngine(engineOverlay.dataset.siteId);
-  if(!result.accepted){btn.disabled=false;const msg=engineOverlay.querySelector('[data-engine-message]');msg.textContent=result.reason==='offline'?'Team synchronization is offline. Firebase must be connected for the four-sleuth Cipher Engine.':'The five-second window had already closed. Wait for the reset and try again.';msg.className='engine-message error';}
+  if(!result.accepted){btn.disabled=false;const msg=engineOverlay.querySelector('[data-engine-message]');msg.textContent=result.reason==='offline'?'Team synchronization is offline. Firebase must be connected for the four-sleuth Cipher Engine.':`The ${engineWindowSeconds()}-second window had already closed. Wait for the reset and try again.`;msg.className='engine-message error';}
 }
 
 function updateEngineOverlay() {
@@ -174,7 +177,7 @@ function updateEngineOverlay() {
   if(!attempt || attempt.status==='failed') {
     if(mode!=='result') {
       resetEngineView();
-      if(attempt?.status==='failed'){const m=engineOverlay.querySelector('[data-engine-message]');m.textContent=attempt.message||'All four sleuths must ingest evidence within 5 seconds of each other.';m.className='engine-message error';}
+      if(attempt?.status==='failed'){const m=engineOverlay.querySelector('[data-engine-message]');m.textContent=attempt.message||engineWindowInstruction();m.className='engine-message error';}
     }
     return;
   }
@@ -197,7 +200,7 @@ function resetEngineView(){
   if(!engineOverlay)return; clearInterval(countdownTimer); countdownTimer=null;
   engineOverlay.classList.remove('processing','resolved');
   engineOverlay.querySelector('[data-letter]').textContent='?';engineOverlay.querySelector('[data-number]').textContent='?';
-  engineOverlay.querySelector('[data-engine-status]').textContent='All four sleuths must ingest evidence within 5 seconds of each other.';
+  engineOverlay.querySelector('[data-engine-status]').textContent=engineWindowInstruction();
   engineOverlay.querySelector('[data-countdown]').textContent='';
   const b=engineOverlay.querySelector('[data-ingest]');b.disabled=false;b.textContent='Ingest Evidence';b.classList.remove('hidden');
   engineOverlay.querySelector('[data-replay]').classList.add('hidden');engineOverlay.querySelector('[data-return]').classList.add('hidden');
@@ -214,7 +217,7 @@ function runEngineAnimation(attempt){
   setTimeout(async()=>{clearInterval(msg);clearInterval(reels);letter.textContent=site.cipher.letter;number.textContent=site.cipher.number;engineOverlay.classList.remove('processing');engineOverlay.classList.add('resolved');engineOverlay.dataset.mode='result';message.textContent='CIPHER CREATED';message.className='engine-message success';b.classList.add('hidden');engineOverlay.querySelector('[data-replay]').classList.remove('hidden');engineOverlay.querySelector('[data-return]').classList.remove('hidden');await sync.writeCipher(site.id,site.cipher);},3000);
 }
 
-function showRecall(){const list=CORE.sortCiphers(team.ciphers);const o=document.createElement('div');o.className='sheet-overlay';o.innerHTML=`<section class="recall-sheet"><button class="sheet-close">×</button>${logo(64)}<p class="eyebrow">FIELD ARCHIVE</p><h2>Recovered Ciphers</h2><div class="cipher-ledger">${list.length?list.map(c=>`<div><span>${c.number}</span><strong>${c.letter}</strong></div>`).join(''):'<p>No ciphers recovered.</p>'}</div></section>`;document.body.appendChild(o);o.querySelector('.sheet-close').onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove();};}
+function showRecall(){const list=CORE.sortCiphers(team.ciphers);const o=document.createElement('div');o.className='sheet-overlay';o.innerHTML=`<section class="recall-sheet"><button class="sheet-close">×</button>${logo(64)}<p class="eyebrow">FIELD ARCHIVE</p><h2>Cipher Library</h2><div class="cipher-ledger">${list.length?list.map(c=>`<div><span>${c.number}</span><strong>${c.letter}</strong></div>`).join(''):'<p>No ciphers created.</p>'}</div></section>`;document.body.appendChild(o);o.querySelector('.sheet-close').onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove();};}
 function showSettings(){const o=document.createElement('div');o.className='sheet-overlay';o.innerHTML=`<section class="settings-sheet"><button class="sheet-close">×</button><p class="eyebrow">FIELD DOSSIER</p><h2>Device Status</h2><dl><dt>Persona</dt><dd>${CONFIG.personas[ui.persona].name}</dd><dt>Session</dt><dd>${escapeHtml(sessionId())}</dd><dt>Team sync</dt><dd>${escapeHtml(connection.message||'')}</dd></dl><button data-change-persona>Change persona on this device</button></section>`;document.body.appendChild(o);o.querySelector('.sheet-close').onclick=()=>o.remove();o.querySelector('[data-change-persona]').onclick=()=>{o.remove();ui.persona=null;saveUi();location.href=location.pathname+`?session=${encodeURIComponent(sessionId())}`;};}
 
 const personaFromUrl=qp('persona');

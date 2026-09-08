@@ -7,11 +7,11 @@ This folder is designed to be uploaded directly to a GitHub Pages directory. Git
 - Four persona-specific phones share one evidence record in real time.
 - Each phone records its own persona evidence; all four records become visible at Team Convergence.
 - Kopp's and the Kenosha Dunes include explicit team-convergence steps before the Cipher Engine unlocks.
-- The Cipher Engine will not run until **all four personas press `Ingest Evidence` within 5 seconds of the first press**.
-- A failed attempt returns to the ready state and displays: **All four sleuths must ingest evidence within 5 seconds of each other.**
-- Every successful run can be replayed. A replay again requires four `Ingest Evidence` presses inside the five-second window.
+- The Cipher Engine will not run until **all four personas press `Ingest Evidence` within 20 seconds of the first press**.
+- A failed attempt returns to the ready state and displays: **All four sleuths must ingest evidence within 20 seconds of each other.**
+- Every successful run can be replayed. A replay again requires four `Ingest Evidence` presses inside the 20-second window.
 - The four persona-colored evidence records visibly feed into the animated Cipher Engine, which displays **CIPHER CREATED** and a configured letter/number pair.
-- Recovered ciphers are shared across phones and displayed in numeric order only.
+- The **Cipher Library** is shared across phones and displays created ciphers in numeric order only.
 - Device-local storage preserves synchronized evidence and queues evidence entered while connectivity is unavailable.
 - A separate **Facilitator Console** can reset a test session without deleting the four connected player identities.
 - A reset clears evidence, team synthesis, engine attempts, and recovered ciphers. Player devices detect the reset and purge stale locally queued run data before synchronizing again.
@@ -24,6 +24,8 @@ Before deploying:
 
 1. In Firebase **Authentication**, enable **Anonymous** sign-in.
 2. In Firebase **Realtime Database → Rules**, replace the rules with the contents of `firebase.rules.json` and click **Publish**.
+
+   **Required for this revision:** republish these rules even if you published an earlier FieldDossier rules file. This version separates facilitator authorization from player identity so the same browser can serve both purposes.
 3. Upload the entire `FieldDossier` folder to the desired GitHub Pages directory.
 
 The app uses Firebase's browser-module SDK from Google's CDN. No npm build step is required.
@@ -52,7 +54,7 @@ Open:
 
 `facilitator.html?session=TEST-1`
 
-The facilitator page anonymously signs into Firebase with a facilitator role for that session and shows:
+The facilitator page anonymously signs into Firebase and registers that browser under a separate `facilitators` branch for the session. This means the same browser can previously have been used as Scarlet/Peacock/Mustard/Plum and still open the Facilitator Console without overwriting its player identity. The console shows:
 
 - evidence count out of 28
 - cipher count out of 7
@@ -71,7 +73,7 @@ The reset clears only the run-state branches for that session:
 - evidence
 - team synthesis
 - Cipher Engine attempts
-- recovered ciphers
+- ciphers shown in the Cipher Library
 
 It deliberately keeps `participants`, so four phones that are already connected do not need to rejoin. A reset timestamp is written to Firebase. Each player phone sees that timestamp and deletes stale local/queued test data before allowing further synchronization.
 
@@ -102,11 +104,11 @@ For this use case, the protection against accidental loss is:
 - a second confirmation is required
 - production uses a fresh session ID
 
-## Five-second Cipher Engine logic
+## Twenty-second Cipher Engine logic
 
-The first `Ingest Evidence` press opens a shared attempt with a five-second deadline. Each of the four persona phones writes its own press to that same attempt. A successful attempt requires one press from each of Scarlet, Peacock, Mustard, and Plum and a maximum timestamp spread of 5,000 ms.
+The first `Ingest Evidence` press opens a shared attempt with a 20-second deadline. Each of the four persona phones writes its own press to that same attempt. A successful attempt requires one press from each of Scarlet, Peacock, Mustard, and Plum and a maximum timestamp spread of 20,000 ms.
 
-A short network grace period is allowed after the deadline so a click made just before five seconds is not discarded merely because the database update takes a fraction of a second to propagate. The actual press timestamps must still fit inside the five-second window.
+A short network grace period is allowed after the deadline so a click made just before 20 seconds is not discarded merely because the database update takes a fraction of a second to propagate. The actual press timestamps must still fit inside the 20-second window.
 
 If the attempt fails, the shared record is marked failed and each open Cipher Engine returns to its pre-button state. The next press begins a new attempt.
 
@@ -123,11 +125,20 @@ The current A–G / 1–7 mapping is a working prototype mapping in `config.js`.
 - `styles.css` — responsive field-dossier / Cipher Engine / facilitator design
 - `config.js` — personas, evidence challenges, working cipher mappings
 - `core.js` — validation and evidence utilities
-- `coordination-core.js` — pure five-second four-person quorum logic
+- `coordination-core.js` — pure configurable four-person quorum logic
 - `firebase-sync.js` — anonymous auth, shared evidence, ciphers, reset awareness, and synchronized Cipher Engine attempts
 - `firebase-config.js` — configured Firebase Web App settings
-- `firebase.rules.json` — Realtime Database rules, including facilitator reset permissions
+- `firebase.rules.json` — Realtime Database rules, including the separate facilitator identity branch and facilitator reset permissions
 - `diamond-logo.svg` — Jewel of the Lochs diamond asset
 - `FIELD_EVIDENCE_TABLE.md` — source-of-truth challenge table
 - `tests.js` — automated logic tests
 - `TEST_REPORT.md` — current test results
+
+
+## Facilitator/player same-browser fix
+
+This revision stores player identities at `sessions/<session>/participants/<uid>` and facilitator authorization separately at `sessions/<session>/facilitators/<uid>`. A browser that has already joined a session as a player no longer has to change roles to use the Facilitator Console.
+
+If the console cannot connect, it now reports the underlying authentication or database-registration error instead of the generic `Firebase sign-in failed` message.
+
+After uploading this revision to GitHub Pages, publish the included `firebase.rules.json` in Firebase Realtime Database before testing the facilitator reset.

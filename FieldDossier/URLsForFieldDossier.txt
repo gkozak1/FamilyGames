@@ -1,0 +1,9 @@
+https://gkozak1.github.io/FamilyGames/FieldDossier/?session=TEST-1&persona=scarlet
+
+https://gkozak1.github.io/FamilyGames/FieldDossier/?session=TEST-1&persona=peacock
+
+https://gkozak1.github.io/FamilyGames/FieldDossier/?session=TEST-1&persona=mustard
+
+https://gkozak1.github.io/FamilyGames/FieldDossier/?session=TEST-1&persona=plum
+
+https://gkozak1.github.io/FamilyGames/FieldDossier/facilitator.html?session=JOTL-2026

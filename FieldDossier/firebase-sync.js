@@ -13,6 +13,7 @@ function cleanSessionId(value) {
   return String(value || '').trim().replace(/[^A-Za-z0-9_-]/g,'').slice(0,64) || 'JOTL-2026-FIELD';
 }
 function configured(cfg) { return Boolean(cfg && cfg.apiKey && cfg.projectId && cfg.databaseURL && cfg.appId); }
+function engineWindowSeconds() { return Math.round(Number(window.FIELD_APP_CONFIG?.engineWindowMs || 20000) / 1000); }
 
 export async function createFieldSync({ sessionId, persona, role='player', config, onState, onConnection }) {
   const sid = cleanSessionId(sessionId);
@@ -52,7 +53,15 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
 
     const fbApp = initializeApp(config);
     const auth = getAuth(fbApp);
-    const credential = await signInAnonymously(auth);
+
+    let credential;
+    try {
+      credential = await signInAnonymously(auth);
+    } catch (error) {
+      const code = error?.code ? ` (${error.code})` : '';
+      throw new Error(`Firebase anonymous sign-in failed${code}: ${error?.message || 'unknown authentication error'}`);
+    }
+
     uid = credential.user.uid;
     db = getDatabase(fbApp, config.databaseURL);
     firebaseReady = true;
@@ -67,11 +76,23 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
       if (connected && hasRemoteSnapshot) flushPending();
     });
 
-    await firebaseFns.set(firebaseFns.ref(db, `sessions/${sid}/participants/${uid}`), {
-      persona: persona || role,
-      role,
-      joinedAt: Date.now()
-    });
+    // Keep facilitator authorization separate from the player's persona
+    // identity. A browser can therefore have joined the hunt as a player and
+    // still open the Facilitator Console later without overwriting its role.
+    const identityPath = role === 'facilitator'
+      ? `sessions/${sid}/facilitators/${uid}`
+      : `sessions/${sid}/participants/${uid}`;
+    try {
+      await firebaseFns.set(firebaseFns.ref(db, identityPath), {
+        persona: role === 'facilitator' ? 'facilitator' : persona,
+        role,
+        joinedAt: Date.now()
+      });
+    } catch (error) {
+      const label = role === 'facilitator' ? 'facilitator access' : `${persona || 'player'} identity`;
+      const code = error?.code ? ` (${error.code})` : '';
+      throw new Error(`Firebase signed in, but ${label} could not be registered${code}: ${error?.message || 'database permission error'}`);
+    }
 
     firebaseFns.onValue(firebaseFns.ref(db, `sessions/${sid}`), snap => {
       const remote = snap.val() || {};
@@ -106,7 +127,8 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
     });
   } catch (error) {
     console.error('Firebase initialization failed', error);
-    onConnection?.({ connected:false, mode:'firebase-error', message:'Firebase sign-in failed; device cache remains available.' });
+    const detail = error?.message || 'Firebase initialization failed';
+    onConnection?.({ connected:false, mode:'firebase-error', message:`${detail}. Device cache remains available.` });
     return makeOfflineApi();
   }
 
@@ -191,7 +213,7 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
         return { ...current, status:'success', successAt:serverNow() };
       }
       if (serverNow() <= Number(current.deadlineAt) + FAILURE_GRACE_MS) return current;
-      return { ...current, status:'failed', failedAt:serverNow(), message:'All four sleuths must ingest evidence within 5 seconds of each other.' };
+      return { ...current, status:'failed', failedAt:serverNow(), message:`All four sleuths must ingest evidence within ${engineWindowSeconds()} seconds of each other.` };
     });
   }
 
