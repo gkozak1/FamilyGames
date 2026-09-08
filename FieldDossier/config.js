@@ -91,7 +91,7 @@
     title: 'The Jewel of the Lochs',
     subtitle: 'Field Dossier',
     defaultSessionId: 'JOTL-2026-FIELD',
-    engineWindowMs: 5000,
+    engineWindowMs: 60000,
     personas: PERSONAS,
     personaOrder: ['scarlet','peacock','mustard','plum'],
     sites: SITES
