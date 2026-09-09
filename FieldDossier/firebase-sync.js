@@ -1,5 +1,5 @@
 const COORD = window.FIELD_COORDINATION_CORE;
-const LOCAL_PREFIX = 'jotl-fielddossier-cache-v3';
+const LOCAL_PREFIX = 'jotl-fielddossier-single-v1';
 const FAILURE_GRACE_MS = 1400;
 
 function clone(v) { return v == null ? v : JSON.parse(JSON.stringify(v)); }
@@ -9,15 +9,12 @@ function pathSet(obj, parts, value) {
   if (value === null) delete cur[parts[parts.length-1]];
   else cur[parts[parts.length-1]] = clone(value);
 }
-function cleanSessionId(value) {
-  return String(value || '').trim().replace(/[^A-Za-z0-9_-]/g,'').slice(0,64) || 'JOTL-2026-FIELD';
-}
 function configured(cfg) { return Boolean(cfg && cfg.apiKey && cfg.projectId && cfg.databaseURL && cfg.appId); }
 function engineWindowSeconds() { return Math.round(Number(window.FIELD_APP_CONFIG?.engineWindowMs || 20000) / 1000); }
 
 export async function createFieldSync({ sessionId, persona, role='player', config, onState, onConnection }) {
-  const sid = cleanSessionId(sessionId);
-  const localKey = `${LOCAL_PREFIX}:${sid}`;
+  const sid = window.FIELD_APP_CONFIG.sessionId;
+  const localKey = `${LOCAL_PREFIX}:${sid}:${role}:${persona}`;
   const pendingKey = `${localKey}:pending`;
   const resetKey = `${localKey}:resetAt`;
   let pending = loadLocal(pendingKey) || {};
@@ -25,6 +22,8 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
   let state = loadLocal(localKey) || { evidence:{}, synthesis:{}, ciphers:{}, engine:{}, participants:{}, meta:{} };
   let connected = false;
   let hasRemoteSnapshot = false;
+  let registered = false;
+  let flushing = false;
   let serverOffset = 0;
   let uid = `offline-${persona || role}`;
   let db = null;
@@ -48,8 +47,8 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
     ]);
     const { initializeApp } = appSdk;
     const { getAuth, signInAnonymously } = authSdk;
-    const { getDatabase, ref, onValue, set, update, runTransaction } = dbSdk;
-    firebaseFns = { ref, onValue, set, update, runTransaction };
+    const { getDatabase, ref, onValue, set, update, runTransaction, get, serverTimestamp } = dbSdk;
+    firebaseFns = { ref, onValue, set, update, runTransaction, get, serverTimestamp };
 
     const fbApp = initializeApp(config);
     const auth = getAuth(fbApp);
@@ -70,10 +69,8 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
     onValue(ref(db, '.info/connected'), snap => {
       connected = Boolean(snap.val());
       onConnection?.({ connected, mode:'firebase', message: connected ? 'Team sync online' : 'Offline — device cache active' });
-      // Pending writes are intentionally NOT flushed here. We wait for the
-      // first current session snapshot so a facilitator reset can invalidate
-      // stale offline data before it is re-sent.
-      if (connected && hasRemoteSnapshot) flushPending();
+      hasRemoteSnapshot = false;
+      if (connected && registered) refreshRemote();
     });
 
     // Keep facilitator authorization separate from the player's persona
@@ -94,11 +91,24 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
       throw new Error(`Firebase signed in, but ${label} could not be registered${code}: ${error?.message || 'database permission error'}`);
     }
 
-    firebaseFns.onValue(firebaseFns.ref(db, `sessions/${sid}`), snap => {
-      const remote = snap.val() || {};
+    registered = true;
+    firebaseFns.onValue(firebaseFns.ref(db, `sessions/${sid}`), snap => receiveRemote(snap.val() || {}), error => {
+      hasRemoteSnapshot = false;
+      onConnection?.({ connected:false, mode:'firebase-error', message:error.message || 'Team sync unavailable' });
+    });
+    if (connected) await refreshRemote();
+  } catch (error) {
+    console.error('Firebase initialization failed', error);
+    onConnection?.({ connected:false, mode:'firebase-error', message:`${error?.message || 'Firebase initialization failed'}. Device cache remains available.` });
+    return makeOfflineApi();
+  }
+
+  function receiveRemote(remote) {
       const remoteResetAt = Number(remote?.meta?.resetAt || 0);
 
+      if (remoteResetAt < lastResetAt) return;
       if (remoteResetAt > lastResetAt) {
+        timers.forEach(clearTimeout); timers.clear();
         // A facilitator reset occurred. Discard local/queued run data so an
         // old test run cannot repopulate the freshly reset Firebase session.
         pending = {};
@@ -118,18 +128,22 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
 
       // Only overlay queued data when it belongs to the current reset epoch.
       Object.entries(pending).forEach(([path, value]) => pathSet(state, path.split('/'), value));
-      hasRemoteSnapshot = true;
       emit();
       Object.entries(state.engine || {}).forEach(([siteId, attempt]) => evaluateAttempt(siteId, attempt));
       if (connected) flushPending();
-    }, error => {
+  }
+
+  async function refreshRemote() {
+    try {
+      const snap = await firebaseFns.get(firebaseFns.ref(db, `sessions/${sid}`));
+      if (!connected) return;
+      receiveRemote(snap.val() || {});
+      hasRemoteSnapshot = true;
+      Object.entries(state.engine || {}).forEach(([siteId, attempt]) => evaluateAttempt(siteId, attempt));
+      await flushPending();
+    } catch (error) {
       onConnection?.({ connected:false, mode:'firebase-error', message:error.message || 'Team sync unavailable' });
-    });
-  } catch (error) {
-    console.error('Firebase initialization failed', error);
-    const detail = error?.message || 'Firebase initialization failed';
-    onConnection?.({ connected:false, mode:'firebase-error', message:`${detail}. Device cache remains available.` });
-    return makeOfflineApi();
+    }
   }
 
   function serverNow() { return Date.now() + serverOffset; }
@@ -140,17 +154,24 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
   }
 
   async function flushPending() {
-    if (!firebaseReady || !connected || !hasRemoteSnapshot || role !== 'player') return;
-    for (const [path, value] of Object.entries({ ...pending })) {
-      try {
-        await firebaseFns.set(firebaseFns.ref(db, `sessions/${sid}/${path}`), value);
-        if (JSON.stringify(pending[path]) === JSON.stringify(value)) delete pending[path];
-        saveLocal(pendingKey, pending);
-      } catch (error) {
-        console.warn('Deferred field write remains queued', path, error);
-        break;
+    if (!firebaseReady || !connected || !hasRemoteSnapshot || role !== 'player' || flushing) return;
+    flushing = true;
+    const round = lastResetAt;
+    try {
+      for (const [path, value] of Object.entries({ ...pending })) {
+        if (!connected || !hasRemoteSnapshot || lastResetAt !== round) break;
+        if (JSON.stringify(pending[path]) !== JSON.stringify(value)) continue;
+        try {
+          const record = value === null ? null : { ...value, round };
+          await firebaseFns.set(firebaseFns.ref(db, `sessions/${sid}/${path}`), record);
+          if (lastResetAt === round && JSON.stringify(pending[path]) === JSON.stringify(value)) delete pending[path];
+          saveLocal(pendingKey, pending);
+        } catch (error) {
+          console.warn('Deferred field write remains queued', path, error);
+          break;
+        }
       }
-    }
+    } finally { flushing = false; }
   }
 
   async function write(path, value) {
@@ -175,26 +196,31 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
   }
 
   async function pressEngine(siteId) {
-    if (!firebaseReady || role !== 'player') return { accepted:false, reason:'offline' };
+    if (!firebaseReady || !connected || !hasRemoteSnapshot || role !== 'player') return { accepted:false, reason:'offline' };
+    const round = lastResetAt;
     const now = serverNow();
     const attemptId = `${uid.slice(0,8)}-${now}-${Math.random().toString(36).slice(2,7)}`;
     const engineRef = firebaseFns.ref(db, `sessions/${sid}/engine/${siteId}`);
-    const result = await firebaseFns.runTransaction(engineRef, current => COORD.applyPress(current, {
+    const result = await firebaseFns.runTransaction(engineRef, current => {
+      if (round !== lastResetAt) return;
+      return { ...COORD.applyPress(current, {
       attemptId, now, persona, uid, windowMs: window.FIELD_APP_CONFIG.engineWindowMs
-    }));
+    }), round };
+    });
     const attempt = result.snapshot.val();
     const accepted = Boolean(attempt?.presses?.[persona] && Math.abs(Number(attempt.presses[persona].at)-now) < 25);
+    if (round !== lastResetAt) return { accepted:false, reason:"reset" };
     evaluateAttempt(siteId, attempt);
     return { accepted, attempt };
   }
 
   async function evaluateAttempt(siteId, attempt) {
-    if (!firebaseReady || role !== 'player' || !attempt || attempt.status !== 'arming') return;
+    if (!firebaseReady || !connected || !hasRemoteSnapshot || role !== 'player' || !attempt || attempt.round !== lastResetAt || attempt.status !== 'arming') return;
     clearTimeout(timers.get(siteId));
     if (COORD.qualifies(attempt, window.FIELD_APP_CONFIG.engineWindowMs)) {
       const engineRef = firebaseFns.ref(db, `sessions/${sid}/engine/${siteId}`);
       await firebaseFns.runTransaction(engineRef, current => {
-        if (!current || current.attemptId !== attempt.attemptId || current.status !== 'arming') return current;
+        if (!current || current.round !== lastResetAt || current.attemptId !== attempt.attemptId || current.status !== 'arming') return current;
         if (!COORD.qualifies(current, window.FIELD_APP_CONFIG.engineWindowMs)) return current;
         return { ...current, status:'success', successAt:serverNow() };
       });
@@ -205,10 +231,10 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
   }
 
   async function failAttempt(siteId, attemptId) {
-    if (!firebaseReady || role !== 'player') return;
+    if (!firebaseReady || !connected || !hasRemoteSnapshot || role !== 'player') return;
     const engineRef = firebaseFns.ref(db, `sessions/${sid}/engine/${siteId}`);
     await firebaseFns.runTransaction(engineRef, current => {
-      if (!current || current.attemptId !== attemptId || current.status !== 'arming') return current;
+      if (!current || current.round !== lastResetAt || current.attemptId !== attemptId || current.status !== 'arming') return current;
       if (COORD.qualifies(current, window.FIELD_APP_CONFIG.engineWindowMs)) {
         return { ...current, status:'success', successAt:serverNow() };
       }
@@ -218,7 +244,7 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
   }
 
   async function resetSession() {
-    if (!firebaseReady || !connected || role !== 'facilitator') {
+    if (!firebaseReady || !connected || !registered || !hasRemoteSnapshot || role !== 'facilitator') {
       return { ok:false, message:'Facilitator reset requires an online Firebase connection.' };
     }
     const now = serverNow();
@@ -227,7 +253,7 @@ export async function createFieldSync({ sessionId, persona, role='player', confi
       synthesis: null,
       ciphers: null,
       engine: null,
-      'meta/resetAt': now,
+      'meta/resetAt': firebaseFns.serverTimestamp(),
       'meta/resetBy': uid
     };
     await firebaseFns.update(firebaseFns.ref(db, `sessions/${sid}`), updates);

@@ -7,7 +7,7 @@
         ".read": "auth != null && (data.child('participants').child(auth.uid).exists() || data.child('facilitators').child(auth.uid).exists())",
         "participants": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && (!data.exists() || (data.child('role').val() === 'player' && newData.child('role').val() === 'player' && data.child('persona').val() === newData.child('persona').val()))",
+            ".write": "auth != null && auth.uid === $uid",
             ".validate": "newData.hasChildren(['persona','role','joinedAt']) && newData.child('role').val() === 'player' && (newData.child('persona').val() === 'scarlet' || newData.child('persona').val() === 'peacock' || newData.child('persona').val() === 'mustard' || newData.child('persona').val() === 'plum')"
           }
         },
@@ -20,26 +20,30 @@
         "evidence": {
           "$site": {
             "$persona": {
-              ".write": "auth != null && (root.child('sessions').child($session).child('facilitators').child(auth.uid).exists() || root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator' || (root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'player' && root.child('sessions').child($session).child('participants').child(auth.uid).child('persona').val() === $persona))"
+              ".write": "auth != null && (root.child('sessions').child($session).child('facilitators').child(auth.uid).exists() || root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator' || (root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'player' && root.child('sessions').child($session).child('participants').child(auth.uid).child('persona').val() === $persona))",
+              ".validate": "newData.hasChild('round') && newData.child('round').val() === (root.child('sessions').child($session).child('meta').child('resetAt').exists() ? root.child('sessions').child($session).child('meta').child('resetAt').val() : 0)"
             }
           },
           ".write": "auth != null && (root.child('sessions').child($session).child('facilitators').child(auth.uid).exists() || root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator')"
         },
         "synthesis": {
           "$site": {
-            ".write": "auth != null && (root.child('sessions').child($session).child('participants').child(auth.uid).exists() || root.child('sessions').child($session).child('facilitators').child(auth.uid).exists())"
+            ".write": "auth != null && (root.child('sessions').child($session).child('participants').child(auth.uid).exists() || root.child('sessions').child($session).child('facilitators').child(auth.uid).exists())",
+            ".validate": "newData.hasChild('round') && newData.child('round').val() === (root.child('sessions').child($session).child('meta').child('resetAt').exists() ? root.child('sessions').child($session).child('meta').child('resetAt').val() : 0)"
           },
           ".write": "auth != null && (root.child('sessions').child($session).child('facilitators').child(auth.uid).exists() || root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator')"
         },
         "ciphers": {
           "$site": {
-            ".write": "auth != null && (root.child('sessions').child($session).child('participants').child(auth.uid).exists() || root.child('sessions').child($session).child('facilitators').child(auth.uid).exists())"
+            ".write": "auth != null && (root.child('sessions').child($session).child('participants').child(auth.uid).exists() || root.child('sessions').child($session).child('facilitators').child(auth.uid).exists())",
+            ".validate": "newData.hasChild('round') && newData.child('round').val() === (root.child('sessions').child($session).child('meta').child('resetAt').exists() ? root.child('sessions').child($session).child('meta').child('resetAt').val() : 0)"
           },
           ".write": "auth != null && (root.child('sessions').child($session).child('facilitators').child(auth.uid).exists() || root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator')"
         },
         "engine": {
           "$site": {
-            ".write": "auth != null && (root.child('sessions').child($session).child('participants').child(auth.uid).exists() || root.child('sessions').child($session).child('facilitators').child(auth.uid).exists())"
+            ".write": "auth != null && (root.child('sessions').child($session).child('participants').child(auth.uid).exists() || root.child('sessions').child($session).child('facilitators').child(auth.uid).exists())",
+            ".validate": "newData.hasChild('round') && newData.child('round').val() === (root.child('sessions').child($session).child('meta').child('resetAt').exists() ? root.child('sessions').child($session).child('meta').child('resetAt').val() : 0)"
           },
           ".write": "auth != null && (root.child('sessions').child($session).child('facilitators').child(auth.uid).exists() || root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator')"
         },
@@ -51,6 +55,47 @@
             ".write": "auth != null && (root.child('sessions').child($session).child('facilitators').child(auth.uid).exists() || root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator')"
           },
           ".write": "auth != null && (root.child('sessions').child($session).child('facilitators').child(auth.uid).exists() || root.child('sessions').child($session).child('participants').child(auth.uid).child('role').val() === 'facilitator')"
+        }
+      }
+    },
+    "connectionsSessions": {
+      "$session": {
+        ".read": "auth != null && (data.child('participants').child(auth.uid).exists() || data.child('facilitators').child(auth.uid).val() === true)",
+        "participants": {
+          "$uid": {
+            "$persona": {
+              ".write": "auth != null && auth.uid === $uid",
+              ".validate": "newData.val() === true && ($persona === 'scarlet' || $persona === 'peacock' || $persona === 'mustard' || $persona === 'plum')"
+            }
+          }
+        },
+        "facilitators": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "fragments": {
+          ".write": "auth != null && root.child('connectionsSessions').child($session).child('facilitators').child(auth.uid).val() === true && !newData.exists()",
+          "$persona": {
+            ".write": "(auth != null && root.child('connectionsSessions').child($session).child('participants').child(auth.uid).child($persona).val() === true) && newData.exists() && newData.child('uid').val() === auth.uid && newData.child('epoch').val() === (root.child('connectionsSessions').child($session).child('meta').child('epoch').exists() ? root.child('connectionsSessions').child($session).child('meta').child('epoch').val() : 0)",
+            ".validate": "newData.hasChildren(['code','uid','epoch']) && newData.child('uid').isString() && newData.child('epoch').isNumber() && (($persona === 'mustard' && newData.child('code').val() === 'MAKE') || ($persona === 'peacock' && newData.child('code').val() === '3PUT') || ($persona === 'plum' && newData.child('code').val() === 'SONH') || ($persona === 'scarlet' && newData.child('code').val() === 'OLE1'))",
+            "code": {},
+            "uid": {},
+            "epoch": {},
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "meta": {
+          ".write": "auth != null && root.child('connectionsSessions').child($session).child('facilitators').child(auth.uid).val() === true",
+          ".validate": "newData.hasChildren(['epoch','resetAt']) && newData.child('epoch').isNumber() && newData.child('epoch').val() === (root.child('connectionsSessions').child($session).child('meta').child('epoch').exists() ? root.child('connectionsSessions').child($session).child('meta').child('epoch').val() : 0) + 1 && newData.child('resetAt').isNumber()",
+          "epoch": {},
+          "resetAt": {},
+          "$other": {
+            ".validate": false
+          }
         }
       }
     }

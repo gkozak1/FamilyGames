@@ -1,4 +1,4 @@
-import { createFieldSync } from './firebase-sync.js';
+import { createFieldSync } from './firebase-sync.js?v=single1';
 
 const CONFIG = window.FIELD_APP_CONFIG;
 const CORE = window.FIELD_APP_CORE;
@@ -18,7 +18,7 @@ function loadUi() {
 }
 function saveUi() { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (_) {} }
 function qp(name) { return new URLSearchParams(location.search).get(name); }
-function sessionId() { return qp('session') || CONFIG.defaultSessionId; }
+function sessionId() { return CONFIG.sessionId; }
 function escapeHtml(v) { return String(v==null?'':v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function logo(size=48) { return `<img src="diamond-logo.svg" class="diamond-logo" width="${size}" height="${size}" alt="The Jewel of the Lochs" />`; }
 
@@ -29,7 +29,13 @@ async function start(persona) {
   sync = await createFieldSync({
     sessionId: sessionId(), persona, role:'player', config: window.FIELD_FIREBASE_CONFIG,
     onState: state => {
+      const reset = Number(state?.meta?.resetAt || 0) > Number(team?.meta?.resetAt || 0);
       team = state || team;
+      if (reset) {
+        closeEngine();
+        document.querySelectorAll('.sheet-overlay').forEach(el => el.remove());
+        ui.currentSiteId = CONFIG.sites[0].id; saveUi(); renderMain(); return;
+      }
       if (engineOverlay) updateEngineOverlay();
       if (!document.activeElement?.matches('input,textarea,select')) renderMain();
     },
@@ -43,7 +49,7 @@ function renderLoading() {
 }
 
 function renderChooser() {
-  app.innerHTML = `<main class="chooser-shell"><section class="chooser-card">${logo(112)}<p class="eyebrow">THE JEWEL OF THE LOCHS</p><h1>Field Dossier</h1><p>Select the field identity assigned to this device.</p><div class="persona-grid">${CONFIG.personaOrder.map(pid=>{const p=CONFIG.personas[pid];return `<button data-persona="${pid}" class="persona-select" style="--persona:${p.color}"><i></i><strong>${p.name}</strong></button>`}).join('')}</div><small>Session: ${escapeHtml(sessionId())}</small></section></main>`;
+  app.innerHTML = `<main class="chooser-shell"><section class="chooser-card">${logo(112)}<p class="eyebrow">THE JEWEL OF THE LOCHS</p><h1>Field Dossier</h1><p>Select the field identity assigned to this device.</p><div class="persona-grid">${CONFIG.personaOrder.map(pid=>{const p=CONFIG.personas[pid];return `<button data-persona="${pid}" class="persona-select" style="--persona:${p.color}"><i></i><strong>${p.name}</strong></button>`}).join('')}</div></section></main>`;
   document.querySelectorAll('[data-persona]').forEach(b=>b.addEventListener('click',()=>start(b.dataset.persona)));
 }
 
@@ -164,8 +170,10 @@ function closeEngine(){clearInterval(countdownTimer);countdownTimer=null;engineO
 
 async function pressIngest() {
   if(!engineOverlay||!sync) return;
+  const overlay=engineOverlay;
   const btn=engineOverlay.querySelector('[data-ingest]'); btn.disabled=true;
   const result=await sync.pressEngine(engineOverlay.dataset.siteId);
+  if(engineOverlay !== overlay) return;
   if(!result.accepted){btn.disabled=false;const msg=engineOverlay.querySelector('[data-engine-message]');msg.textContent=result.reason==='offline'?'Team synchronization is offline. Firebase must be connected for the four-sleuth Cipher Engine.':`The ${engineWindowSeconds()}-second window had already closed. Wait for the reset and try again.`;msg.className='engine-message error';}
 }
 
@@ -208,17 +216,19 @@ function resetEngineView(){
   CONFIG.personaOrder.forEach(pid=>engineOverlay.querySelector(`[data-quorum="${pid}"]`)?.classList.remove('pressed'));
 }
 function runEngineAnimation(attempt){
+  const overlay = engineOverlay;
+  const round = Number(team.meta?.resetAt || 0);
   const site=CONFIG.sites.find(s=>s.id===engineOverlay.dataset.siteId); engineOverlay.dataset.animatedAttempt=attempt.attemptId; engineOverlay.dataset.mode='processing';
   engineOverlay.classList.add('processing'); const b=engineOverlay.querySelector('[data-ingest]');b.disabled=true;b.textContent='Processing…';
   const message=engineOverlay.querySelector('[data-engine-message]');const statuses=['INGESTING PERSONA EVIDENCE…','ALIGNING FOUR FIELD STREAMS…','ENGAGING CIPHER WHEELS…','RESOLVING OUTPUT…'];let i=0;message.textContent=statuses[0];
   const letters='ABCDEFG', letter=engineOverlay.querySelector('[data-letter]'), number=engineOverlay.querySelector('[data-number]');
   const msg=setInterval(()=>{i=Math.min(i+1,statuses.length-1);message.textContent=statuses[i];},650);
   const reels=setInterval(()=>{letter.textContent=letters[Math.floor(Math.random()*7)];number.textContent=String(1+Math.floor(Math.random()*7));},85);
-  setTimeout(async()=>{clearInterval(msg);clearInterval(reels);letter.textContent=site.cipher.letter;number.textContent=site.cipher.number;engineOverlay.classList.remove('processing');engineOverlay.classList.add('resolved');engineOverlay.dataset.mode='result';message.textContent='CIPHER CREATED';message.className='engine-message success';b.classList.add('hidden');engineOverlay.querySelector('[data-replay]').classList.remove('hidden');engineOverlay.querySelector('[data-return]').classList.remove('hidden');await sync.writeCipher(site.id,site.cipher);},3000);
+  setTimeout(async()=>{clearInterval(msg);clearInterval(reels);if(engineOverlay !== overlay || Number(team.meta?.resetAt || 0) !== round) return;letter.textContent=site.cipher.letter;number.textContent=site.cipher.number;engineOverlay.classList.remove('processing');engineOverlay.classList.add('resolved');engineOverlay.dataset.mode='result';message.textContent='CIPHER CREATED';message.className='engine-message success';b.classList.add('hidden');engineOverlay.querySelector('[data-replay]').classList.remove('hidden');engineOverlay.querySelector('[data-return]').classList.remove('hidden');await sync.writeCipher(site.id,site.cipher);},3000);
 }
 
 function showRecall(){const list=CORE.sortCiphers(team.ciphers);const o=document.createElement('div');o.className='sheet-overlay';o.innerHTML=`<section class="recall-sheet"><button class="sheet-close">×</button>${logo(64)}<p class="eyebrow">FIELD ARCHIVE</p><h2>Cipher Library</h2><div class="cipher-ledger">${list.length?list.map(c=>`<div><span>${c.number}</span><strong>${c.letter}</strong></div>`).join(''):'<p>No ciphers created.</p>'}</div></section>`;document.body.appendChild(o);o.querySelector('.sheet-close').onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove();};}
-function showSettings(){const o=document.createElement('div');o.className='sheet-overlay';o.innerHTML=`<section class="settings-sheet"><button class="sheet-close">×</button><p class="eyebrow">FIELD DOSSIER</p><h2>Device Status</h2><dl><dt>Persona</dt><dd>${CONFIG.personas[ui.persona].name}</dd><dt>Session</dt><dd>${escapeHtml(sessionId())}</dd><dt>Team sync</dt><dd>${escapeHtml(connection.message||'')}</dd></dl><button data-change-persona>Change persona on this device</button></section>`;document.body.appendChild(o);o.querySelector('.sheet-close').onclick=()=>o.remove();o.querySelector('[data-change-persona]').onclick=()=>{o.remove();ui.persona=null;saveUi();location.href=location.pathname+`?session=${encodeURIComponent(sessionId())}`;};}
+function showSettings(){const o=document.createElement('div');o.className='sheet-overlay';o.innerHTML=`<section class="settings-sheet"><button class="sheet-close">×</button><p class="eyebrow">FIELD DOSSIER</p><h2>Device Status</h2><dl><dt>Persona</dt><dd>${CONFIG.personas[ui.persona].name}</dd><dt>Team sync</dt><dd>${escapeHtml(connection.message||'')}</dd></dl><button data-change-persona>Change persona on this device</button></section>`;document.body.appendChild(o);o.querySelector('.sheet-close').onclick=()=>o.remove();o.querySelector('[data-change-persona]').onclick=()=>{o.remove();ui.persona=null;saveUi();location.href=location.pathname;};}
 
 const personaFromUrl=qp('persona');
 if(personaFromUrl&&CONFIG.personas[personaFromUrl]) ui.persona=personaFromUrl;

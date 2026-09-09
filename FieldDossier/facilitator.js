@@ -1,4 +1,4 @@
-import { createFieldSync } from './firebase-sync.js';
+import { createFieldSync } from './firebase-sync.js?v=single1';
 
 const CONFIG = window.FIELD_APP_CONFIG;
 const app = document.getElementById('app');
@@ -6,16 +6,14 @@ let state = { evidence:{}, synthesis:{}, ciphers:{}, engine:{}, participants:{},
 let sync = null;
 let connection = { connected:false, message:'Connecting…' };
 let resetting = false;
+let resetMessage = '';
 
-function qp(name) { return new URLSearchParams(location.search).get(name); }
-function cleanSessionId(value) { return String(value || '').trim().replace(/[^A-Za-z0-9_-]/g,'').slice(0,64) || CONFIG.defaultSessionId; }
-function sessionId() { return cleanSessionId(qp('session') || CONFIG.defaultSessionId); }
+function sessionId() { return CONFIG.sessionId; }
 function escapeHtml(v) { return String(v == null ? '' : v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function logo(size=64) { return `<img src="diamond-logo.svg" class="diamond-logo" width="${size}" height="${size}" alt="The Jewel of the Lochs" />`; }
 function basePlayerUrl(persona) {
   const base = new URL('index.html', location.href);
   base.search = '';
-  base.searchParams.set('session', sessionId());
   base.searchParams.set('persona', persona);
   return base.href;
 }
@@ -48,7 +46,7 @@ async function start() {
 }
 
 function renderLoading() {
-  app.innerHTML = `<main class="loading-shell">${logo(84)}<h1>Facilitator Console</h1><p>Connecting to session ${escapeHtml(sessionId())}…</p></main>`;
+  app.innerHTML = `<main class="loading-shell">${logo(84)}<h1>Facilitator Console</h1><p>Connecting to the field game…</p></main>`;
 }
 
 function render() {
@@ -64,15 +62,6 @@ function render() {
           <strong>${connection.connected?'Firebase online':'Firebase offline'}</strong>
           <span>${escapeHtml(connection.message || '')}</span>
         </div>
-
-        <section class="facilitator-section">
-          <h2>Current Session</h2>
-          <div class="session-switch">
-            <input data-session-input value="${escapeHtml(sessionId())}" aria-label="Session ID" />
-            <button class="secondary" data-open-session>Open Session</button>
-          </div>
-          <p class="muted">Test runs and the production hunt should use different session IDs.</p>
-        </section>
 
         <section class="facilitator-metrics">
           <div><span>Evidence</span><strong>${evidence}/28</strong></div>
@@ -92,17 +81,18 @@ function render() {
 
         <section class="facilitator-section">
           <h2>Four Player Links</h2>
-          <p class="muted">These links all use the current session ID.</p>
+          <p class="muted">All four links join the same field game.</p>
           <div class="player-links">
             ${CONFIG.personaOrder.map(pid=>`<button class="text-button" data-copy-url="${escapeHtml(basePlayerUrl(pid))}">Copy ${CONFIG.personas[pid].short} URL</button>`).join('')}
           </div>
         </section>
 
         <section class="facilitator-section danger-zone">
-          <h2>Reset Test / Session Data</h2>
-          <p>This clears evidence, team convergence, Cipher Engine attempts, and recovered ciphers for <strong>${escapeHtml(sessionId())}</strong>. The four player identities stay connected.</p>
-          <p class="muted">Use this after a test run. For the real hunt, use a fresh production session ID as a second safeguard.</p>
-          <button class="danger-button" data-reset ${(!connection.connected || resetting)?'disabled':''}>${resetting?'Resetting…':'Reset Current Session'}</button>
+          <h2>Reset Field Dossier</h2>
+          <p>This clears evidence, team convergence, Cipher Engine attempts, and recovered ciphers for all four players. The four player identities stay connected.</p>
+          <p class="muted">One click starts a fresh field game. Connections progress is unaffected.</p>
+          <button class="danger-button" data-reset ${(!connection.connected || resetting)?'disabled':''}>${resetting?'Resetting…':'Reset game'}</button>
+          <p role="status" aria-live="polite">${escapeHtml(resetMessage)}</p>
         </section>
       </section>
     </main>`;
@@ -110,13 +100,6 @@ function render() {
 }
 
 function bind() {
-  document.querySelector('[data-open-session]')?.addEventListener('click', () => {
-    const value = cleanSessionId(document.querySelector('[data-session-input]')?.value);
-    location.href = `facilitator.html?session=${encodeURIComponent(value)}`;
-  });
-  document.querySelector('[data-session-input]')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.querySelector('[data-open-session]')?.click();
-  });
   document.querySelectorAll('[data-copy-url]').forEach(btn => btn.addEventListener('click', async () => {
     const old = btn.textContent;
     try { await navigator.clipboard.writeText(btn.dataset.copyUrl); btn.textContent='Copied'; }
@@ -128,21 +111,15 @@ function bind() {
 
 async function resetCurrentSession() {
   if (resetting || !sync) return;
-  const sid = sessionId();
-  const typed = prompt(`This permanently clears the current run data for ${sid}.\n\nType the session ID exactly to confirm:`);
-  if (typed !== sid) {
-    if (typed !== null) alert('Session ID did not match. Nothing was reset.');
-    return;
-  }
-  const again = confirm(`Reset all test/game progress in ${sid}?\n\nPlayer identities will remain connected, but all 28 evidence entries, team results, engine attempts, and recovered ciphers will be cleared.`);
-  if (!again) return;
+  if (!connection.connected) return;
+  resetMessage = '';
   resetting = true; render();
   try {
     const result = await sync.resetSession();
     if (!result.ok) throw new Error(result.message || 'Reset failed');
-    alert(`Session ${sid} has been reset. Player phones will return to a clean run automatically.`);
+    resetMessage = 'Field Dossier reset. All four players can begin again.';
   } catch (error) {
-    alert(`Reset failed: ${error.message || error}`);
+    resetMessage = `Reset failed: ${error.message || error}`;
   } finally {
     resetting = false; render();
   }
