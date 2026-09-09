@@ -12,7 +12,13 @@
     return;
   }
 
-  const facetParameter = new URLSearchParams(window.location.search).get("facet");
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = config.sessionId;
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(sessionId || "")) {
+    app.innerHTML = '<main class="config-error"><h1>Check the session link</h1><p>Session names use letters, numbers, hyphens and underscores.</p></main>';
+    return;
+  }
+  const facetParameter = params.get("facet");
   const facet = config.facets.find(
     (candidate) =>
       candidate.id === String(facetParameter || "").toLowerCase() ||
@@ -33,8 +39,48 @@
   let shouldShake = false;
   let assistantHelp = false;
 
-  ensureOwnFragment();
+  let sync = null;
+  let sharedAssembly = ["", "", "", ""];
+  let syncStatus = { connected: false, pending: false, message: "Connecting — your progress is saved on this device." };
+  let celebrated = false;
   render();
+  startSync();
+
+  async function startSync() {
+    try {
+      const { createConnectionsSync } = await import("./firebase-sync.mjs");
+      sync = createConnectionsSync({ sessionId, facet, facets: config.facets,
+        config: window.CONNECTIONS_FIREBASE_CONFIG, puzzleId: config.puzzleId,
+        onState: value => {
+          const changedEpoch = state.epoch !== null && state.epoch !== value.epoch;
+          if (value.reset || changedEpoch || (state.epoch === null && value.epoch !== 0)) {
+            state = blankState(); celebrated = false; message = "The assistant has started a fresh round.";
+            sync?.cancelPending();
+          }
+          state.epoch = value.epoch;
+          sharedAssembly = value.assembly;
+          if (value.ownPublished) state.phase = "assemble";
+          if (["assemble", "complete"].includes(state.phase)) {
+            state.phase = sharedAssembly.every(Boolean) ? "complete" : "assemble";
+          }
+          saveState();
+          if (value.reset || changedEpoch || ["assemble", "complete"].includes(state.phase)) render();
+        },
+        onStatus: value => { syncStatus = value; updateSyncStatus(); }
+      });
+      if (["assemble", "complete"].includes(state.phase)) sync.publish();
+    } catch (_) {
+      syncStatus = { connected: false, pending: true, message: "Connection interrupted — progress saved. Retrying automatically." };
+      updateSyncStatus();
+      setTimeout(startSync, 5000);
+    }
+  }
+  function updateSyncStatus() {
+    const el = document.getElementById("sync-status");
+    if (!el) return;
+    el.textContent = syncStatus.message;
+    el.className = `sync-status ${syncStatus.connected && !syncStatus.pending ? "online" : "pending"}`;
+  }
 
   function validConfig(value) {
     return Boolean(
@@ -78,6 +124,7 @@
   function blankState() {
     return {
       phase: "connection",
+      epoch: null,
       selected: anchor ? [anchor.id] : [],
       categoryAnswer: "",
       orderSelection: [],
@@ -86,13 +133,14 @@
   }
 
   function storageKey() {
-    return `${config.puzzleId}:${facet.id}`;
+    return `${config.puzzleId}:${sessionId}:${facet.id}:game`;
   }
 
   function restoreState() {
     try {
       const saved = JSON.parse(localStorage.getItem(storageKey()) || "null");
       if (!saved) return blankState();
+      if (saved.epoch === undefined) saved.epoch = null;
       if (!saved.selected || !saved.selected.includes(anchor.id)) saved.selected = [anchor.id];
       if (!Array.isArray(saved.orderSelection)) saved.orderSelection = [];
       if (!Array.isArray(saved.assembly) || saved.assembly.length !== 4) {
@@ -110,10 +158,6 @@
     } catch (_error) {
       // The puzzle still works if a browser blocks local storage.
     }
-  }
-
-  function ensureOwnFragment() {
-    state.assembly[facet.partNumber - 1] = facet.code;
   }
 
   function escapeHtml(value) {
@@ -195,9 +239,10 @@
         <section class="game" aria-label="${escapeHtml(facet.label)} Connections puzzle">
           ${content}
         </section>
+        <p id="sync-status" class="sync-status" role="status" aria-live="polite"></p>
         <footer>
           <span>${escapeHtml(facet.label)}</span><span aria-hidden="true">•</span>
-          <button id="reset-facet" type="button">Start this facet over</button>
+          ${["assemble", "complete"].includes(state.phase) ? "" : '<button id="reset-facet" type="button">Start this facet over</button>'}
         </footer>
       </main>`;
   }
@@ -209,6 +254,7 @@
     else if (state.phase === "complete") renderAssembly(true);
     else renderConnection();
     bindReset();
+    updateSyncStatus();
     saveState();
   }
 
@@ -247,6 +293,7 @@
       tiles = shuffled(tiles);
       renderConnection();
       bindReset();
+      updateSyncStatus();
     });
     document.getElementById("deselect-button").addEventListener("click", () => {
       state.selected = [anchor.id];
@@ -395,7 +442,7 @@
     );
     if (correct) {
       state.phase = "assemble";
-      ensureOwnFragment();
+      sync?.publish();
       message = "";
     } else {
       message = "The clues are not yet in the correct order.";
@@ -403,64 +450,37 @@
     render();
   }
 
-  function renderAssembly(complete) {
-    const blocks = state.assembly
-      .map((part, index) => {
-        const owner = config.facets.find((candidate) => candidate.partNumber === index + 1);
-        const own = index === facet.partNumber - 1;
-        return `
-          <label class="code-block" style="--block-color:${owner.color}">
-            <span>Block ${index + 1}</span>
-            <input value="${escapeHtml(part)}" data-code-index="${index}" maxlength="4" inputmode="text"
-              aria-label="Code block ${index + 1}${own ? ", locked" : ""}" ${own || complete ? "readonly" : ""} />
-            ${own ? "<small>Locked</small>" : ""}
-          </label>`;
-      })
-      .join("");
-
+  function renderAssembly() {
+    const parts = sharedAssembly.slice();
+    // An earned local fragment stays visible while its upload is pending.
+    parts[facet.partNumber - 1] = facet.code;
+    const complete = sharedAssembly.every(Boolean);
+    const firstReveal = complete && !celebrated;
+    if (complete) celebrated = true;
+    state.phase = complete ? "complete" : "assemble";
+    const count = sharedAssembly.filter(Boolean).length;
+    const blocks = config.facets.slice().sort((a, b) => a.partNumber - b.partNumber).map(owner => {
+      const part = parts[owner.partNumber - 1];
+      const confirmed = !!sharedAssembly[owner.partNumber - 1];
+      const name = owner.label.replace(" Facet", "");
+      return `<div class="code-block ${part ? "recovered" : "waiting"}" style="--block-color:${owner.color}">
+        <span>${escapeHtml(name)}</span>
+        <div class="code-value" aria-label="${escapeHtml(name)} fragment">${escapeHtml(part || "····")}</div>
+        <small>${confirmed ? "Recovered" : part ? "Sharing…" : `Waiting for ${escapeHtml(name)}`}</small>
+      </div>`;
+    }).join("");
     app.innerHTML = shell(`
-      <section class="stage-card assembly-card">
-        <img class="stage-diamond" src="${diamondPath(complete)}" alt="" />
-        ${complete ? `
-          <p class="stage-label">The four facets are united</p>
-          <h1>Decode the recovered transmission</h1>
-          <p>The message has no spaces and may use abbreviations.</p>` : `
-          <p class="stage-label">Facet authenticated</p>
-          <h1>Your code is the ${ordinal(facet.partNumber)} of 4 parts to assemble</h1>
-          <div class="fragment-reveal">${escapeHtml(facet.code)}</div>
-          <p>Exchange fragments and block numbers with the other three sleuths.</p>`}
-        <div class="assembly-grid${complete ? " complete" : ""}">${blocks}</div>
-        ${complete ? `<div class="continuous-code">${escapeHtml(state.assembly.join(""))}</div>` : ""}
+      <section class="stage-card assembly-card ${complete ? "transmission-complete" : ""} ${firstReveal ? "just-completed" : ""}">
+        <img class="stage-diamond" src="${diamondPath(complete)}" alt="${complete ? "All four diamond facets illuminated" : "Your diamond facet"}" />
+        <p class="stage-label">${complete ? "The four facets are united." : "Facet authenticated"}</p>
+        <h1>${complete ? "Decode the recovered transmission" : "Your fragment is recovered"}</h1>
+        <p>${complete ? "The message has no spaces and may use abbreviations." : "The other fragments will appear here as each sleuth recovers them."}</p>
+        <div class="assembly-grid ${complete ? "complete" : ""}">${blocks}</div>
+        <p class="recovery-count" role="status">${complete ? "All 4 fragments recovered" : `${count} of 4 fragments shared`}</p>
+        ${complete ? `<div class="continuous-code">${escapeHtml(sharedAssembly.join(""))}</div>
+          <div class="final-instruction">When you understand Nigel’s instruction, state it to his erstwhile assistant.</div>` : ""}
         <div class="message" role="status" aria-live="polite">${message || "&nbsp;"}</div>
-        ${complete ? `
-          <div class="final-instruction">When you understand Nigel’s instruction, state it to the Assistant.</div>` : `
-          <div class="button-row"><button class="pill-button submit-button" id="assemble-code" type="button" ${state.assembly.some((part) => part.length !== 4) ? "disabled" : ""}>Assemble code</button></div>`}
       </section>`, complete);
-
-    app.querySelectorAll("[data-code-index]").forEach((input) => {
-      input.addEventListener("input", () => {
-        const index = Number(input.dataset.codeIndex);
-        if (index === facet.partNumber - 1) return;
-        const cleaned = input.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4);
-        input.value = cleaned;
-        state.assembly[index] = cleaned;
-        message = "";
-        saveState();
-        const button = document.getElementById("assemble-code");
-        if (button) button.disabled = state.assembly.some((part) => part.length !== 4);
-      });
-    });
-    if (!complete) {
-      document.getElementById("assemble-code").addEventListener("click", () => {
-        if (state.assembly.join("") === config.finalCode) {
-          state.phase = "complete";
-          message = "";
-        } else {
-          message = "At least one shared fragment is incorrect. Check its characters and block number.";
-        }
-        render();
-      });
-    }
   }
 
   function bindReset() {
@@ -473,8 +493,10 @@
       } catch (_error) {
         // Continue with an in-memory reset.
       }
+      const epoch = state.epoch;
       state = blankState();
-      ensureOwnFragment();
+      state.epoch = epoch;
+      sync?.cancelPending();
       tiles = TILE_ORDER.map((position) => allTiles[position]);
       message = "";
       assistantHelp = false;

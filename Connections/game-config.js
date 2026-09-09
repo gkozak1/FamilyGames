@@ -9,8 +9,9 @@
 window.CONNECTIONS_CONFIG = {
   title: "The Jewel of the Lochs",
   instructions: "Recover your connection",
-  puzzleId: "jewel-of-the-lochs-four-facets-v3",
-  finalCode: "MAKE3PUTSHOL1FOX",
+  puzzleId: "jewel-of-the-lochs-four-facets-sync-v1",
+  finalCode: "MAKE3PUTSONHOLE1",
+  sessionId: "JEWEL-CONNECTIONS",
 
   facets: [
     {
@@ -18,7 +19,7 @@ window.CONNECTIONS_CONFIG = {
       label: "Scarlet Facet",
       color: "#c6404d",
       categoryIndex: 2,
-      anchorText: "MAROON (X)",
+      anchorText: "MAROON (1)",
       partNumber: 4,
       acceptedKeywordSets: [
         ["college", "nickname"],
@@ -28,12 +29,12 @@ window.CONNECTIONS_CONFIG = {
       orderInstruction:
         "Put the college nicknames in chronological order of the first year in which a sleuth attended them.",
       orderedItems: [
-        "GREEN KNIGHT (1)",
-        "BILLIKIN (F)",
-        "FIGHTING IRISH (O)",
-        "MAROON (X)",
+        "GREEN KNIGHT (O)",
+        "BILLIKIN (L)",
+        "FIGHTING IRISH (E)",
+        "MAROON (1)",
       ],
-      code: "1FOX",
+      code: "OLE1",
     },
     {
       id: "peacock",
@@ -93,11 +94,11 @@ window.CONNECTIONS_CONFIG = {
         "Put the capitals that Madeleine has visited in alphabetical order of the countries they are capitals of.",
       orderedItems: [
         "PARIS (S)",
-        "REYKJAVIK (H)",
-        "DUBLIN (O)",
-        "ROME (L)",
+        "REYKJAVIK (O)",
+        "DUBLIN (N)",
+        "ROME (H)",
       ],
-      code: "SHOL",
+      code: "SONH",
     },
   ],
 
@@ -109,9 +110,9 @@ window.CONNECTIONS_CONFIG = {
       color: "#f9df6d",
       items: [
         { text: "PARIS (S)" },
-        { text: "REYKJAVIK (H)" },
-        { text: "ROME (L)" },
-        { text: "DUBLIN (O)" },
+        { text: "REYKJAVIK (O)" },
+        { text: "ROME (H)" },
+        { text: "DUBLIN (N)" },
       ],
     },
     {
@@ -130,10 +131,10 @@ window.CONNECTIONS_CONFIG = {
       description: "School team names",
       color: "#b0c4ef",
       items: [
-        { text: "BILLIKIN (F)" },
-        { text: "FIGHTING IRISH (O)" },
-        { text: "MAROON (X)" },
-        { text: "GREEN KNIGHT (1)" },
+        { text: "BILLIKIN (L)" },
+        { text: "FIGHTING IRISH (E)" },
+        { text: "MAROON (1)" },
+        { text: "GREEN KNIGHT (O)" },
       ],
     },
     {

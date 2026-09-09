@@ -1,0 +1,43 @@
+{
+  "connectionsSessions": {
+    "$session": {
+      ".read": "auth != null && (data.child('participants').child(auth.uid).exists() || data.child('facilitators').child(auth.uid).val() === true)",
+      "participants": {
+        "$uid": {
+          "$persona": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.val() === true && ($persona === 'scarlet' || $persona === 'peacock' || $persona === 'mustard' || $persona === 'plum')"
+          }
+        }
+      },
+      "facilitators": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.val() === true"
+        }
+      },
+      "fragments": {
+        ".write": "auth != null && root.child('connectionsSessions').child($session).child('facilitators').child(auth.uid).val() === true && !newData.exists()",
+        "$persona": {
+          ".write": "(auth != null && root.child('connectionsSessions').child($session).child('participants').child(auth.uid).child($persona).val() === true) && newData.exists() && newData.child('uid').val() === auth.uid && newData.child('epoch').val() === (root.child('connectionsSessions').child($session).child('meta').child('epoch').exists() ? root.child('connectionsSessions').child($session).child('meta').child('epoch').val() : 0)",
+          ".validate": "newData.hasChildren(['code','uid','epoch']) && newData.child('uid').isString() && newData.child('epoch').isNumber() && (($persona === 'mustard' && newData.child('code').val() === 'MAKE') || ($persona === 'peacock' && newData.child('code').val() === '3PUT') || ($persona === 'plum' && newData.child('code').val() === 'SONH') || ($persona === 'scarlet' && newData.child('code').val() === 'OLE1'))",
+          "code": {},
+          "uid": {},
+          "epoch": {},
+          "$other": {
+            ".validate": false
+          }
+        }
+      },
+      "meta": {
+        ".write": "auth != null && root.child('connectionsSessions').child($session).child('facilitators').child(auth.uid).val() === true",
+        ".validate": "newData.hasChildren(['epoch','resetAt']) && newData.child('epoch').isNumber() && newData.child('epoch').val() === (root.child('connectionsSessions').child($session).child('meta').child('epoch').exists() ? root.child('connectionsSessions').child($session).child('meta').child('epoch').val() : 0) + 1 && newData.child('resetAt').isNumber()",
+        "epoch": {},
+        "resetAt": {},
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

@@ -257,3 +257,25 @@ footer button { padding: 0; border: 0; border-bottom: 1px solid currentColor; ba
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+/* Automatic four-phone fragment assembly. */
+.sync-status { max-width: 48rem; margin: 1rem auto; padding: .6rem 1rem; text-align: center; font-size: .9rem; }
+.sync-status.online { color: #315b44; }
+.sync-status.pending { color: #7b4b19; }
+.code-value { border: 2px solid var(--block-color); border-radius: .5rem; padding: .8rem .2rem; font-size: clamp(1.3rem, 5vw, 2rem); font-weight: 800; letter-spacing: .08em; background: white; color: #20242c; }
+.code-block.recovered .code-value { background: color-mix(in srgb, var(--block-color) 12%, white); }
+.code-block.waiting .code-value { border-style: dashed; color: #777; }
+.code-block small { position: static; display: block; min-height: 2.4em; margin-top: .5rem; font-size: .875rem; line-height: 1.2; text-transform: none; }
+.code-block { padding: 10px 7px; text-align: center; }
+.code-block > span { font-size: .875rem; letter-spacing: 0; }
+.assembly-grid.complete { opacity: 1; }
+@media (max-width: 480px) { .assembly-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
+.recovery-count { font-weight: 700; }
+.transmission-complete { border: 2px solid #387654; background: #f6fcf8; }
+.transmission-complete .stage-diamond { filter: drop-shadow(0 0 9px #b3cbbd); }
+.just-completed .assembly-grid { animation: recovered-glow 1.3s ease-out; }
+.continuous-code { overflow-wrap: anywhere; font-size: clamp(1.15rem, 5vw, 2rem); }
+@keyframes recovered-glow { 0%, 50% { filter: drop-shadow(0 0 12px #97c5ac); } 100% { filter: none; } }
+@media (prefers-reduced-motion: reduce) { .just-completed .assembly-grid { animation: none; } }
+.facilitator-panel label { display: block; margin: 1rem 0; }
+.facilitator-panel input { width: min(100%, 25rem); padding: .7rem; font-size: 1rem; }
+.facilitator-panel ul { text-align: left; overflow-wrap: anywhere; }

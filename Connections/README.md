@@ -1,47 +1,63 @@
-# The Jewel of the Lochs — Four-Facet Connections
+# The Jewel of the Lochs — Connections
 
-Package revision: **2026-09-04 v4**. See `VERSION.txt` for the verification checklist.
+Revision: 2026-09-09, automatic four-player sharing and one-click admin reset.
 
-Upload the contents of this folder to the `FamilyGames/Connections` directory in your GitHub Pages repository.
+## Install this revision
 
-The four personalized entrances and assignments are:
+1. Upload **all contents of this Connections folder** to your existing `FamilyGames/Connections` directory on GitHub Pages. Include the new `.mjs` files, `firebase-config.js`, and `admin.html`.
+2. In your existing Firebase project **fielddossier**, open **Realtime Database → Rules** and publish the included `firebase.rules.json`.
+   - This combined file preserves the Field Dossier rules from `FieldDossier_PermissionFix.zip` and adds a separate `connectionsSessions` branch.
+   - If you have since changed other live rules, merge just the `connectionsSessions` object from `connections.rules.patch.json` into the existing top-level `rules` object instead. Preserve other branches.
+   - Anonymous sign-in is the same Firebase setup used by Field Dossier. No new project or API key is needed.
 
-1. Mustard — secondary destinations — code block 1: `https://gkozak1.github.io/FamilyGames/Connections/?facet=mustard`
-2. Peacock — French treats — code block 2: `https://gkozak1.github.io/FamilyGames/Connections/?facet=peacock`
-3. Plum — capitals — code block 3: `https://gkozak1.github.io/FamilyGames/Connections/?facet=plum`
-4. Scarlet — college nicknames/mascots — code block 4: `https://gkozak1.github.io/FamilyGames/Connections/?facet=scarlet`
+Uploading the app alone is not enough: Firebase needs the new rules before phones can share fragments or the admin can reset them. The package does not publish rules or change your live app automatically.
 
-Opening the base address without a facet parameter displays a printable Assistant page with all four QR codes.
+## Play
 
-## Files to upload
+The existing four QR codes still work:
 
-Upload every file and folder here, including:
+- Mustard: https://gkozak1.github.io/FamilyGames/Connections/?facet=mustard
+- Peacock: https://gkozak1.github.io/FamilyGames/Connections/?facet=peacock
+- Plum: https://gkozak1.github.io/FamilyGames/Connections/?facet=plum
+- Scarlet: https://gkozak1.github.io/FamilyGames/Connections/?facet=scarlet
 
-- `index.html`
-- `styles.css`
-- `game.js`
-- `game-config.js`
-- `diamond-logo.png`
-- the `facets` folder
-- the `qr` folder
+Each sleuth finds their connection, identifies it, and orders the four clues. Correct ordering earns and automatically shares that persona’s fragment. Solved players see new fragments arrive in their colored blocks. Players who have not finished remain in their own puzzle.
 
-## Editing the puzzle
+| Block | Persona | Fragment |
+| --- | --- | --- |
+| 1 | Mustard | MAKE |
+| 2 | Peacock | 3PUT |
+| 3 | Plum | SONH |
+| 4 | Scarlet | OLE1 |
 
-All category assignments, acceptable answer keywords, ordering instructions, fragments, and the final 16-character code are in `game-config.js`.
+After all four fragments have been shared, every solved player automatically sees a brief highlight, the complete diamond, “The four facets are united.”, and `MAKE3PUTSONHOLE1`. There is no manual code entry or Assemble button.
 
-The `acceptedKeywordSets` entries are alternatives. A player succeeds when their answer contains all the word stems in any one listed set. For example, `["french", "treat"]` accepts “French treats” and longer wording containing those two concepts.
+The exact final instruction is:
 
-If the destination address changes, update `baseUrl` in `scripts/generate-qr-codes.mjs` in the full source package and regenerate the QR codes.
+> When you understand Nigel’s instruction, state it to his erstwhile assistant.
 
-## Player flow
+Clue names and ordering tasks are preserved. Plum’s clue letters are now PARIS (S), REYKJAVIK (O), DUBLIN (N), ROME (H). Scarlet’s are GREEN KNIGHT (O), BILLIKIN (L), FIGHTING IRISH (E), MAROON (1).
 
-Each QR code permanently selects a different anchor clue. The player:
+## One-click reset
 
-1. Selects three additional clues and submits a connection.
-2. Identifies the recovered connection in words.
-3. Orders the four clues according to the personalized instruction.
-4. Receives one fixed four-character fragment.
-5. Exchanges fragments and block numbers with the other sleuths.
-6. Reconstructs and decodes the complete 16-character transmission.
+Open https://gkozak1.github.io/FamilyGames/Connections/admin.html
 
-Progress is saved separately on each phone. There is no limit on guesses and no shared server state.
+Wait for the connection message, then click **Reset game** once. There is no session selector, confirmation dialog, or typed confirmation.
+
+The button clears all four shared fragments and advances the current round. Connected players return to the first puzzle screen. An offline phone discards its old round and queued fragment when it reconnects. Browser refreshes within the current round preserve progress.
+
+There is one fixed session, `JEWEL-CONNECTIONS`. The app ignores session URL parameters. You can test and reset this same session as often as needed. The printed QR codes never need to change.
+
+Reset affects Connections only. Field Dossier evidence, ciphers, and other records are untouched. Anonymous participant identities and a round counter remain so phones can recognize a reset and stay connected. The player’s “Start this facet over” button is available before earning a fragment; after sharing, use the admin button to restart the whole game.
+
+The admin page is intentionally a lightweight family-game control, following the Field Dossier pattern. It is not password-protected. Keep its URL for the facilitator; it is not linked from the player screens.
+
+## Connection loss
+
+Progress is saved locally. A solved fragment shows “Sharing…” until acknowledged by Firebase; the app retries interrupted connections automatically. A reset counter is checked before retrying queued submissions, and the database rules reject submissions from previous rounds. Keep the phone connected long enough for its fragment to be shared. If the page itself cannot load without internet, reconnect and reopen it.
+
+## Verification
+
+Run `node tests.mjs` from this folder. The included tests exercise the game event handlers and synchronization through a simulated four-client Firebase adapter, including reset and offline cases. They do not contact your live Firebase database or replace a real four-phone deployment check.
+
+Firebase implementation reference: https://firebase.google.com/docs/database/web/read-and-write

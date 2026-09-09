@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Connections — Admin</title>
+  <link rel="icon" href="diamond-logo.png" />
+  <link rel="stylesheet" href="styles.css?v=sync1" />
+  <script src="game-config.js?v=sync1"></script>
+  <script src="firebase-config.js?v=sync1"></script>
+  <script type="module" src="admin.mjs?v=sync1"></script>
+</head>
+<body>
+  <main class="launcher-shell"><section class="launcher-card facilitator-panel">
+    <img src="facets/complete.svg" width="84" height="84" alt="" />
+    <p class="kicker">The Jewel of the Lochs</p>
+    <h1>Connections admin</h1>
+    <p id="connection" role="status">Connecting…</p>
+    <p id="progress">Checking recovered fragments…</p>
+    <button id="reset-game" type="button" class="pill-button submit-button" disabled>Reset game</button>
+    <p>One click clears all four fragments and restarts the players’ puzzles.</p>
+    <p id="reset-result" role="status" aria-live="polite"></p>
+    <h2>Player links</h2>
+    <ul id="player-links"></ul>
+  </section></main>
+</body>
+</html>

@@ -1,13 +1,6 @@
-The Jewel of the Lochs — GitHub Pages Package
-Revision: 2026-09-04 v4
-
-Verified changes in this revision:
-- Final code: MAKE3PUTSHOL1FOX
-- Mustard: secondary places, part 1
-- Peacock: French pastries, part 2
-- Plum: capitals, part 3
-- Scarlet: college mascots, part 4
-- Singular tiles: MAROON, BILLIKIN, GREEN KNIGHT, MACARON,
-  PROFITEROLE, NAPOLEON, and MADELEINE
-- Anchors: MAROON, MADELEINE, HELLISSANDUR, and PARIS
-- Configuration cache version: v3
+2026-09-09 — Connections automatic sync v1
+Final code: MAKE3PUTSONHOLE1
+Fragments: MAKE / 3PUT / SONH / OLE1
+Single fixed session; one-click admin reset
+Final instruction: When you understand Nigel’s instruction, state it to his erstwhile assistant.
+Publish firebase.rules.json before live use; existing Field Dossier rules preserved.
