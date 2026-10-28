@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Showdown Button Test</title>
+<style>
+  :root{--bg:#0d1530;--panel:#17224a;--ink:#f3f6ff;--muted:#a9b6df;--good:#22c55e;--bad:#f43f5e;--warn:#f59e0b}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:22px;padding:24px 16px}
+  h1{margin:0;font-size:clamp(28px,5vw,44px);text-align:center}
+  .sub{margin:0;color:var(--muted);font-size:20px;text-align:center}
+  .btns{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+  .tap{width:min(30vw,220px);aspect-ratio:1;border-radius:28px;border:6px solid transparent;font-size:clamp(64px,12vw,120px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;color:#0d1530;font-weight:800}
+  .tap span{font-size:clamp(18px,3vw,28px)}
+  .tap:disabled{opacity:.4;cursor:not-allowed}
+  .tap:active{transform:scale(.95)}
+  .d{background:#5eead4}.t{background:#fdba74}.r{background:#c4b5fd}
+  .tap.sent{border-color:#fff;box-shadow:0 0 0 6px var(--good)}
+  .msg{font-size:26px;font-weight:700;min-height:36px;text-align:center}
+  .checks{background:var(--panel);border-radius:16px;padding:14px 20px;display:flex;flex-direction:column;gap:8px;width:min(560px,100%);font-size:17px}
+  .row{display:flex;gap:10px;align-items:flex-start}
+  .row b{min-width:28px}
+  .err{color:#fecaca;font-size:15px;margin-left:38px}
+</style>
+</head>
+<body>
+  <h1>Tap your team!</h1>
+  <p class="sub">This is a test. Tap one picture.</p>
+  <div class="btns">
+    <button class="tap d" data-team="dragon" disabled>🐉<span>Dragon</span></button>
+    <button class="tap t" data-team="tiger" disabled>🐯<span>Tiger</span></button>
+    <button class="tap r" data-team="robot" disabled>🤖<span>Robot</span></button>
+  </div>
+  <div class="msg" id="msg">Connecting…</div>
+  <div class="checks" id="checks"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA8z6WaaA3cP4QLgCxdCvQsyslvH7bdYXc",
+  authDomain: "clcinternetsafety.firebaseapp.com",
+  databaseURL: "https://clcinternetsafety-default-rtdb.firebaseio.com",
+  projectId: "clcinternetsafety",
+  storageBucket: "clcinternetsafety.firebasestorage.app",
+  messagingSenderId: "35026260769",
+  appId: "1:35026260769:web:8b5fe6dd9fd8382be0a460"
+};
+const checks = document.getElementById('checks'), msg = document.getElementById('msg');
+const steps = {};
+function step(key, label, state, detail){
+  steps[key] = { label, state, detail };
+  checks.innerHTML = Object.values(steps).map(s =>
+    `<div class="row"><b>${s.state === 'ok' ? '✅' : s.state === 'bad' ? '❌' : '⏳'}</b><span>${s.label}</span></div>` +
+    (s.detail ? `<div class="err">${s.detail}</div>` : '')).join('');
+}
+function explain(e){
+  const c = (e && (e.code || e.message)) || String(e);
+  if (/operation-not-allowed|admin-restricted/.test(c)) return 'Fix: Firebase → Authentication → Sign-in method → turn on Anonymous.';
+  if (/unauthorized-domain/.test(c)) return 'Fix: Firebase → Authentication → Settings → Authorized domains → add ' + location.hostname;
+  if (/PERMISSION_DENIED|permission/i.test(c)) return 'Fix: paste the test rules into Realtime Database → Rules, then Publish.';
+  if (/network/i.test(c)) return 'The school network may be blocking Firebase. Code: ' + c;
+  return 'Error: ' + c;
+}
+step('page', 'Page loaded', 'ok');
+if (!window.firebase) {
+  step('lib', 'Firebase library', 'bad', 'Could not load Firebase from www.gstatic.com. The network may block it.');
+  msg.textContent = 'Not connected';
+} else {
+  step('lib', 'Firebase library', 'ok');
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  step('auth', 'Signing in (no account needed)', 'wait');
+  firebase.auth().signInAnonymously().then(cred => {
+    step('auth', 'Signed in (no account needed)', 'ok');
+    const uid = cred.user.uid;
+    step('db', 'Database connection', 'wait');
+    let tm = setTimeout(() => step('db', 'Database connection', 'bad', 'No answer after 10 seconds. The school network may block firebaseio.com.'), 10000);
+    db.ref('.info/connected').on('value', s => {
+      if (s.val() === true) {
+        clearTimeout(tm);
+        step('db', 'Database connection', 'ok');
+        const me = db.ref('test/presence/' + uid);
+        me.onDisconnect().remove();
+        me.set({ at: firebase.database.ServerValue.TIMESTAMP }).catch(e => step('db', 'Database connection', 'bad', explain(e)));
+        document.querySelectorAll('.tap').forEach(b => b.disabled = false);
+        msg.textContent = 'Ready! Tap a picture.';
+      }
+    });
+    document.querySelectorAll('.tap').forEach(b => b.onclick = () => {
+      const team = b.dataset.team;
+      db.ref('test/taps').push({ team, uid, at: firebase.database.ServerValue.TIMESTAMP }).then(() => {
+        document.querySelectorAll('.tap').forEach(x => x.classList.toggle('sent', x === b));
+        msg.textContent = '✅ Sent! Look at the teacher’s screen.';
+        step('tap', 'Tap sent to the teacher', 'ok');
+      }).catch(e => { msg.textContent = '❌ Not sent'; step('tap', 'Tap sent to the teacher', 'bad', explain(e)); });
+    });
+  }).catch(e => { step('auth', 'Signing in (no account needed)', 'bad', explain(e)); msg.textContent = 'Not connected'; });
+}
+</script>
+</body>
+</html>

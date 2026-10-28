@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Showdown Button Test — Teacher</title>
+<style>
+  :root{--bg:#0d1530;--panel:#17224a;--ink:#f3f6ff;--muted:#a9b6df;--good:#22c55e}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,sans-serif;padding:24px 16px;display:flex;flex-direction:column;align-items:center;gap:20px}
+  h1{margin:0;font-size:40px;text-align:center}
+  .status{font-size:20px;color:var(--muted);text-align:center}
+  .counts{display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
+  .card{width:220px;border-radius:24px;padding:18px;text-align:center;color:#0d1530}
+  .card .e{font-size:80px;line-height:1}
+  .card .n{font-size:64px;font-weight:800}
+  .card .l{font-size:22px;font-weight:700}
+  .d{background:#5eead4}.t{background:#fdba74}.r{background:#c4b5fd}
+  .flash{animation:flash .6s}
+  @keyframes flash{0%{transform:scale(1.12);box-shadow:0 0 0 10px #fff}100%{transform:none}}
+  .log{background:var(--panel);border-radius:16px;padding:14px 20px;width:min(640px,100%);font-size:17px;max-height:260px;overflow:auto}
+  button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:10px 18px;cursor:pointer}
+  .err{color:#fecaca}
+</style>
+</head>
+<body>
+  <h1>Button test: teacher screen</h1>
+  <div class="status" id="status">Connecting…</div>
+  <div class="counts">
+    <div class="card d" id="c-dragon"><div class="e">🐉</div><div class="n">0</div><div class="l">Dragon</div></div>
+    <div class="card t" id="c-tiger"><div class="e">🐯</div><div class="n">0</div><div class="l">Tiger</div></div>
+    <div class="card r" id="c-robot"><div class="e">🤖</div><div class="n">0</div><div class="l">Robot</div></div>
+  </div>
+  <div class="log" id="log">Waiting for taps…</div>
+  <button id="clear">Clear the test</button>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA8z6WaaA3cP4QLgCxdCvQsyslvH7bdYXc",
+  authDomain: "clcinternetsafety.firebaseapp.com",
+  databaseURL: "https://clcinternetsafety-default-rtdb.firebaseio.com",
+  projectId: "clcinternetsafety",
+  storageBucket: "clcinternetsafety.firebasestorage.app",
+  messagingSenderId: "35026260769",
+  appId: "1:35026260769:web:8b5fe6dd9fd8382be0a460"
+};
+const statusEl = document.getElementById('status'), logEl = document.getElementById('log');
+const label = { dragon:'🐉 Dragon', tiger:'🐯 Tiger', robot:'🤖 Robot' };
+if (!window.firebase) { statusEl.innerHTML = '<span class="err">❌ Could not load Firebase from www.gstatic.com.</span>'; }
+else {
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  firebase.auth().signInAnonymously().then(() => {
+    let devices = 0, connected = false;
+    const show = () => statusEl.textContent = (connected ? '✅ Connected' : '⏳ Connecting…') + ` · Student devices on the test page: ${devices}`;
+    db.ref('.info/connected').on('value', s => { connected = s.val() === true; show(); });
+    db.ref('test/presence').on('value', s => { devices = s.numChildren(); show(); });
+    let first = true;
+    db.ref('test/taps').on('value', s => {
+      const n = { dragon:0, tiger:0, robot:0 }, rows = [];
+      s.forEach(c => { const v = c.val(); if (n[v.team] !== undefined) n[v.team]++; rows.push(v); });
+      for (const k in n) {
+        const card = document.getElementById('c-' + k), num = card.querySelector('.n');
+        if (!first && +num.textContent !== n[k]) { card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash'); }
+        num.textContent = n[k];
+      }
+      first = false;
+      logEl.innerHTML = rows.length ? rows.slice(-12).reverse().map(v => `${label[v.team] || v.team} · ${new Date(v.at).toLocaleTimeString()}`).join('<br>') : 'Waiting for taps…';
+    }, e => { statusEl.innerHTML = '<span class="err">❌ ' + e.message + ' (paste the test rules into Realtime Database → Rules)</span>'; });
+    document.getElementById('clear').onclick = () => db.ref('test/taps').remove();
+  }).catch(e => { statusEl.innerHTML = '<span class="err">❌ Sign-in failed: ' + (e.code || e.message) + '. Turn on Anonymous sign-in and add this site to Authorized domains.</span>'; });
+}
+</script>
+</body>
+</html>
