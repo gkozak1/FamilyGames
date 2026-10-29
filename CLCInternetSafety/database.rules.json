@@ -1,0 +1,48 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "test": {
+      ".read": "auth != null",
+      "taps": {
+        ".write": "auth != null",
+        "$tap": {
+          ".validate": "newData.hasChildren(['team','uid','at']) && newData.child('team').val().matches(/^(dragon|tiger|robot)$/)"
+        }
+      },
+      "presence": {
+        "$uid": { ".write": "auth != null && auth.uid === $uid" }
+      }
+    },
+    "showdown": {
+      ".read": "auth != null",
+      "state": { ".write": "auth != null" },
+      "host": { ".write": "auth != null" },
+      "notes": { ".write": "auth != null" },
+      "players": {
+        ".write": "auth != null && !newData.exists()",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['team']) && newData.child('team').val().matches(/^(dragon|tiger|robot)$/)"
+        }
+      },
+      "answers": {
+        ".write": "auth != null && !newData.exists()",
+        "$qid": {
+          ".write": "auth != null && !newData.exists()",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['team','choice']) && newData.child('team').val().matches(/^(dragon|tiger|robot)$/)"
+          }
+        }
+      },
+      "gallery": {
+        ".write": "auth != null && !newData.exists()",
+        "$pid": {
+          ".write": "auth != null && (!data.exists() || !newData.exists())",
+          ".validate": "newData.hasChildren(['team','uid','img','at']) && newData.child('uid').val() === auth.uid && newData.child('team').val().matches(/^(dragon|tiger|robot)$/) && newData.child('img').isString() && newData.child('img').val().beginsWith('data:image/') && newData.child('img').val().length < 450000"
+        }
+      }
+    }
+  }
+}

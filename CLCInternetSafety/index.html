@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Director Showdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+2:wght@600;800&display=swap">
+<style>
+  :root{--bg:#0e1633;--panel:#18234d;--panel2:#22306a;--ink:#f5f7ff;--muted:#aab6e0;--good:#22c55e;--warn:#f59e0b;--tc:#38bdf8;
+    --display:"Baloo 2","Segoe UI",system-ui,sans-serif;--body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif}
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--body)}
+  body{background-image:radial-gradient(900px 500px at 10% -10%,rgba(56,189,248,.15),transparent 60%),radial-gradient(700px 500px at 110% 110%,rgba(244,114,182,.12),transparent 60%);min-height:100vh}
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  button:focus-visible{outline:4px solid #fde047;outline-offset:3px}
+  .wrap{max-width:900px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left));display:flex;flex-direction:column;gap:18px}
+  .top{display:flex;align-items:center;gap:12px;min-height:56px}
+  .top .badge{width:56px;height:56px;border-radius:50%;object-fit:cover;border:4px solid var(--tc);background:#fff}
+  .top .tn{font-family:var(--display);font-size:28px;font-weight:800;color:var(--tc);flex:1;line-height:1}
+  .top .tn small{display:block;font-family:var(--body);font-size:15px;color:var(--muted);font-weight:400}
+  h1{font-family:var(--display);font-size:clamp(30px,5vw,46px);margin:0;line-height:1.05;text-align:center}
+  .say{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+  .prompt{font-size:clamp(24px,3.6vw,34px);font-weight:700;text-align:center;line-height:1.25;margin:0}
+  .read{border:2px solid var(--panel2);background:var(--panel);border-radius:999px;padding:8px 16px;font-size:18px;font-weight:700}
+  .teams{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .teamBtn{border:5px solid transparent;border-radius:24px;background:#fff;padding:10px 6px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;color:#0e1633}
+  .teamBtn img{width:100%;max-width:200px;aspect-ratio:3/4;object-fit:contain}
+  .teamBtn span{font-family:var(--display);font-size:clamp(22px,4vw,32px);font-weight:800}
+  .teamBtn:hover{transform:translateY(-3px)}
+  .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:14px}
+  .opt{min-height:150px;border-radius:24px;border:5px solid var(--panel2);background:var(--panel);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px;position:relative;transition:transform .1s}
+  .opt .ic{font-size:60px;line-height:1}
+  .opt .lb{font-size:24px;font-weight:700;text-align:center;line-height:1.1}
+  .opt .im{width:96px;height:96px;border-radius:50%;object-fit:cover;background:#fff}
+  .opt:active{transform:scale(.96)}
+  .opt.sel{border-color:#fde047;background:#2d3b80;box-shadow:0 0 0 4px rgba(253,224,71,.35)}
+  .opt.sel::after{content:"✓";position:absolute;top:8px;right:12px;font-size:30px;font-weight:800;color:#fde047}
+  .opt:disabled{opacity:.45}
+  .status{text-align:center;font-size:24px;font-weight:700;min-height:34px}
+  .status.ok{color:#86efac}
+  .big{font-size:clamp(70px,14vw,120px);text-align:center;line-height:1;animation:bob 2.4s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .card{background:var(--panel);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px;align-items:center}
+  .pill{background:#fde047;color:#2b2100;border:0;border-radius:18px;padding:16px 26px;font-family:var(--display);font-size:28px;font-weight:800;display:flex;align-items:center;gap:10px}
+  .pill.alt{background:var(--panel2);color:var(--ink)}
+  .preview{max-width:100%;max-height:50vh;border-radius:16px;border:4px solid #fff}
+  .hint{color:var(--muted);font-size:18px;text-align:center}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .checks{background:var(--panel);border-radius:16px;padding:12px 16px;font-size:17px;display:flex;flex-direction:column;gap:6px}
+  .foot{text-align:center}
+  .foot button{background:none;border:0;color:var(--muted);text-decoration:underline;font-size:16px}
+  .paste{border:3px dashed var(--panel2);border-radius:18px;padding:16px;text-align:center;color:var(--muted);font-size:18px;width:100%}
+  @media (max-width:520px){.teams{grid-template-columns:1fr}.teamBtn img{max-width:140px}}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><h1>Connecting…</h1></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="common.js"></script>
+<script>
+'use strict';
+const app = document.getElementById('app');
+let db, uid, team = null, state = null, myAnswer = null, ansRef = null, ansQid = null;
+let photo = null, sentCount = 0, picOpen = false;
+try { team = localStorage.getItem('sd-team'); if (!TEAM_IDS.includes(team)) team = null; sentCount = +localStorage.getItem('sd-sent') || 0; } catch (e) {}
+
+function speak(t) { try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.rate = .95; speechSynthesis.speak(u); } catch (e) {} }
+function setTeamColor() { const t = teamById(team); document.documentElement.style.setProperty('--tc', t ? t.color : '#38bdf8'); }
+
+function header() {
+  const t = teamById(team); if (!t) return '';
+  return `<div class="top"><img class="badge" src="${t.head}" alt=""><div class="tn">Team ${t.name}<small>You are on this team</small></div></div>`;
+}
+
+function render() {
+  setTeamColor();
+  if (!team) { renderTeamPick(); return; }
+  if (picOpen) { renderPicture(); return; }
+  const s = state || { screen: 'lobby' };
+  let body = '';
+  const picBtn = s.galleryOpen ? `<button class="pill" data-act="pic">📷 Send my picture</button>${sentCount ? `<div class="hint">You sent ${sentCount} picture${sentCount > 1 ? 's' : ''}. Gizmo will look at them at lunch! 🤖</div>` : ''}` : '';
+  if (s.screen === 'question' && s.q) body = renderQuestion(s.q);
+  else if (s.screen === 'end') body = `<div class="card"><div class="big">🏆</div><h1>Thanks for playing!</h1><p class="prompt">Ask. Change. Decide.</p></div>`;
+  else {
+    const msg = s.msg || 'Look at the big screen!';
+    body = `<div class="card"><div class="big">${esc(s.emoji || '👀')}</div><p class="prompt">${esc(msg)}</p>${picBtn}</div>`;
+  }
+  app.innerHTML = header() + body + `<div class="foot"><button data-act="changeTeam">Change team</button></div>`;
+}
+
+function renderTeamPick() {
+  app.innerHTML = `<h1>Tap your team!</h1>
+    <div class="say"><button class="read" data-act="read" data-text="Tap your team. Dragon, Tiger, or Robot.">🔊 Read</button></div>
+    <div class="teams">${TEAMS.map(t => `<button class="teamBtn" data-act="team" data-team="${t.id}" style="border-color:${t.color}"><img src="${t.img}" alt=""><span>${t.name}</span></button>`).join('')}</div>`;
+}
+
+function renderQuestion(q) {
+  const t = teamById(team);
+  let opts = arr(q.options);
+  if (q.excludeOwn) opts = opts.filter(o => o.id !== team);
+  const sel = myAnswer ? arr(myAnswer.choice) : [];
+  const locked = !!q.locked;
+  const max = q.max || 1;
+  const status = locked ? (sel.length ? '🔒 Your answer is in! Look at the big screen.' : '🔒 Time is up! Look at the big screen.')
+    : sel.length ? (max > 1 && sel.length < max ? `✅ Got it! You can pick ${max - sel.length} more.` : '✅ Got it! Tap another to change.') : (max > 1 ? `Pick up to ${max}.` : 'Tap one.');
+  return `<div class="say">${q.icon ? `<span style="font-size:44px">${esc(q.icon)}</span>` : ''}<p class="prompt">${esc(q.prompt)}</p></div>
+    <div class="say"><button class="read" data-act="read" data-text="${esc(q.prompt + ' ' + opts.map(o => o.label).join('. '))}">🔊 Read</button></div>
+    <div class="opts">${opts.map(o => `<button class="opt ${sel.includes(o.id) ? 'sel' : ''}" data-act="ans" data-id="${esc(o.id)}" ${locked ? 'disabled' : ''}>
+      ${o.img ? `<img class="im" src="${esc(o.img)}" alt="">` : `<span class="ic">${esc(o.icon || '')}</span>`}<span class="lb">${esc(o.label)}</span></button>`).join('')}</div>
+    <div class="status ${sel.length ? 'ok' : ''}">${status}</div>`;
+}
+
+function renderPicture() {
+  app.innerHTML = header() + `<div class="card">
+    <h1>📷 Send my picture</h1>
+    ${photo ? `<img class="preview" src="${photo}" alt="Your picture">
+      <div class="row"><button class="pill" data-act="send">✅ Send it</button><button class="pill alt" data-act="choose">🔁 Pick another</button></div>`
+    : `<div class="row"><button class="pill" data-act="choose">🖼️ Pick my picture</button></div>
+       <div class="paste" tabindex="0">Or copy your picture, then click here and press <b>Ctrl + V</b></div>
+       <div class="hint">Only pictures you made. No photos of people.</div>`}
+    <div class="status" id="picStatus"></div>
+    <button class="pill alt" data-act="closePic">⬅️ Back</button>
+    <input type="file" id="file" accept="image/*" hidden></div>`;
+}
+
+/* ---- picture handling ---- */
+function loadImageFile(file) {
+  if (!file || !/^image\//.test(file.type)) { const s = document.getElementById('picStatus'); if (s) s.textContent = 'That is not a picture. Try again!'; return; }
+  const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => {
+    const max = 900; let w = img.naturalWidth, h = img.naturalHeight; const k = Math.min(1, max / Math.max(w, h)); w = Math.round(w * k); h = Math.round(h * k);
+    const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+    let q = .82, data = c.toDataURL('image/jpeg', q); while (data.length > 400000 && q > .4) { q -= .1; data = c.toDataURL('image/jpeg', q); }
+    URL.revokeObjectURL(url); photo = data; render();
+  };
+  img.onerror = () => { const s = document.getElementById('picStatus'); if (s) s.textContent = 'Could not open that picture. Try another!'; };
+  img.src = url;
+}
+document.addEventListener('paste', e => { if (!picOpen) return; const it = [...(e.clipboardData?.items || [])].find(i => i.type.startsWith('image/')); if (it) { e.preventDefault(); loadImageFile(it.getAsFile()); } });
+document.addEventListener('change', e => { if (e.target.id === 'file' && e.target.files[0]) loadImageFile(e.target.files[0]); });
+
+async function sendPicture() {
+  const s = document.getElementById('picStatus'); if (s) s.textContent = 'Sending…';
+  try {
+    await db.ref(`${ROOT}/gallery`).push({ team, uid, img: photo, at: firebase.database.ServerValue.TIMESTAMP });
+    sentCount++; try { localStorage.setItem('sd-sent', sentCount); } catch (e) {}
+    photo = null; picOpen = false; render();
+  } catch (e) { if (s) s.textContent = '❌ Not sent. ' + fbExplain(e); }
+}
+
+/* ---- answers ---- */
+function watchMyAnswer() {
+  const q = state && state.screen === 'question' ? state.q : null;
+  const qid = q ? q.id : null;
+  if (qid === ansQid) return;
+  if (ansRef) ansRef.off(); ansRef = null; myAnswer = null; ansQid = qid;
+  if (qid) { ansRef = db.ref(`${ROOT}/answers/${qid}/${uid}`); ansRef.on('value', s => { myAnswer = s.val(); render(); }); }
+}
+async function answer(id) {
+  const q = state && state.q; if (!q || q.locked) return;
+  const max = q.max || 1; let sel = myAnswer ? arr(myAnswer.choice).filter(x => x !== 'none') : [];
+  if (max === 1) sel = [id]; else if (sel.includes(id)) sel = sel.filter(x => x !== id); else { sel.push(id); if (sel.length > max) sel.shift(); }
+  myAnswer = { team, choice: sel }; render();
+  try { await db.ref(`${ROOT}/answers/${q.id}/${uid}`).set({ team, choice: sel.length ? sel : ['none'], at: firebase.database.ServerValue.TIMESTAMP }); }
+  catch (e) { const st = document.querySelector('.status'); if (st) st.textContent = '❌ ' + fbExplain(e); }
+}
+
+/* ---- events ---- */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const a = b.dataset.act;
+  if (a === 'team') { team = b.dataset.team; try { localStorage.setItem('sd-team', team); } catch (e) {} registerPlayer(); render(); }
+  else if (a === 'changeTeam') { if (b.dataset.sure) { team = null; try { localStorage.removeItem('sd-team'); } catch (e) {} db.ref(`${ROOT}/players/${uid}`).remove().catch(() => {}); render(); } else { b.dataset.sure = '1'; b.textContent = 'Tap again to change team'; } }
+  else if (a === 'read') speak(b.dataset.text);
+  else if (a === 'ans') answer(b.dataset.id);
+  else if (a === 'pic') { picOpen = true; photo = null; render(); }
+  else if (a === 'choose') document.getElementById('file')?.click();
+  else if (a === 'send') sendPicture();
+  else if (a === 'closePic') { picOpen = false; photo = null; render(); }
+});
+
+function registerPlayer() {
+  if (!team || !uid) return;
+  const ref = db.ref(`${ROOT}/players/${uid}`);
+  ref.onDisconnect().remove(); ref.set({ team, at: firebase.database.ServerValue.TIMESTAMP }).catch(() => {});
+}
+
+/* ---- start ---- */
+(async function start() {
+  if (!window.firebase) { app.innerHTML = `<h1>😕 Can’t connect</h1><div class="checks">Firebase did not load. The network may be blocking www.gstatic.com.</div>`; return; }
+  try {
+    db = fbStart(); uid = await fbSignIn();
+    db.ref('.info/connected').on('value', s => { if (s.val() === true) registerPlayer(); });
+    db.ref(`${ROOT}/state`).on('value', s => { state = s.val(); watchMyAnswer(); if (!(picOpen && photo)) render(); }, e => { app.innerHTML = `<h1>😕 Can’t connect</h1><div class="checks">${esc(fbExplain(e))}</div>`; });
+    render();
+  } catch (e) { app.innerHTML = `<h1>😕 Can’t connect</h1><div class="checks">${esc(fbExplain(e))}</div>`; }
+})();
+</script>
+</body>
+</html>
